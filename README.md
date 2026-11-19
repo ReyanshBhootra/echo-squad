@@ -1,0 +1,50 @@
+# ECHO SQUAD
+
+Your past self is your teammate. A 60-second, mouse-driven arcade game with replay teammates, a trained neural rival and an inspectable experiment lab.
+
+## Run locally
+
+Requires Node.js 22 or later. No packages, accounts, external services, network assets or install step.
+
+```sh
+npm start
+```
+
+Open http://127.0.0.1:4173 in a modern desktop browser. Serve over HTTP, rather than double-clicking index.html: ES modules and offline caching need a suitable origin. The server binds only to this machine. After first load and successful cache installation, the browser can use cached assets without the server; keep the server running for the simplest booth setup. A browser reload, model loading and training-lab rendering were verified with the local server stopped.
+
+## Play
+
+Move the mouse inside the arena, or use arrow keys/WASD. No clicking is needed during play. Touch dragging also steers, but desktop is the primary target.
+
+- Pass 1, 20 seconds: collect blue sparks, 10 points each.
+- Pass 2, 20 seconds: your first route replays. Use the line between you to sweep orange diamonds, 35 points each.
+- Pass 3, 20 seconds: two routes replay. Surround gold cores with the three-drone triangle, 90 points each.
+
+Every five seconds, a fresh deterministic target wave appears. Both sides use the same layout seed, time, movement constraints and scoring. Short explanations between passes pause both simulations. Escape pauses; the run also pauses on tab/window focus loss. An inactive run resets after 18 seconds of no steering input. Result screens reset after 60 seconds; save your score first. Scores are stored locally, capped at 200, and never sent to a server. Do not use public leaderboards as an anti-cheat system; browser-local records are editable.
+
+Vs neural squad runs the trained controller in a separate identical arena. Its dashed ring indicates its current position; it has its own replay teammates and target collection. The AI does not steal your targets. Open Spectator on the same browser/origin for a local station display.
+
+## Train and verify
+
+```sh
+npm test
+npm run train
+```
+
+Training regenerates model files and experiment artifacts deterministically, apart from elapsed wall time. Read research/EXPERIMENT.md. It is supervised imitation, not reinforcement learning. The first trained model does not beat the greedy baseline; the UI discloses this result. Do not call generated examples human data or simulation steps completed games.
+
+## Source map
+
+- src/sim.js: shared deterministic simulation and scripted controllers.
+- src/neural.js: 16 → 32 → 2 tanh network, inference and SGD backpropagation.
+- scripts/train.mjs: synthetic examples, three independent runs, validation selection, held-out evaluation.
+- src/app.js / render.js: station lifecycle, accessible HTML controls and canvas presentation.
+- src/lab.js: charts and tables built directly from actual experiment artifacts.
+- spectator.html / sw.js: local spectator sync and offline assets.
+- tests/: meaningful simulation, replay and learning checks.
+
+## Hackathon status
+
+Local development build. Not registered, deployed or submitted by this project. The entrant handles registration and account access. No GRID dataset is used. PyCharm Community 2024.3 was used to navigate the project, format and run the independent Python evidence audit successfully; see JETBRAINS.md for the precise scope and evidence. No claim of human playtesting, biological brain simulation, scientific novelty or guaranteed prize.
+
+Original code and procedural graphics/sound. Design guidance: Emil Kowalski's [design-engineering and animation skills](https://github.com/emilkowalski/skills), applied to restrained state transitions, press feedback and reduced-motion behavior. This is not an affiliation with Cloud9, JetBrains or NVIDIA.

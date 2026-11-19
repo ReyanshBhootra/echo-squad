@@ -1,0 +1,12 @@
+node_modules/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+*.log
+.DS_Store
+stl-hackathon-2026-grid-starter/
+*.zst
+*.jsonl
+*.parquet
+*.sqlite
+*.duckdb

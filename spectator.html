@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ECHO SQUAD — Station board</title>
+    <link rel="icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./style.css" />
+    <style>
+      body {
+        background: #151e24;
+        color: #f2f0e9;
+        padding: 5vw;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #ffffff25;
+        padding-bottom: 24px;
+        align-items: center;
+      }
+      header span {
+        font: 11px monospace;
+        color: #9cb0bc;
+      }
+      h1 {
+        margin: 0;
+        font-size: 70px;
+      }
+      .live {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        padding: 50px 0;
+        border-bottom: 1px solid #ffffff25;
+      }
+      .live h2 {
+        font-size: 55px;
+        margin: 12px 0;
+      }
+      .big-score {
+        font: 100px monospace;
+        text-align: right;
+        color: #8dd7ff;
+        letter-spacing: -6px;
+      }
+      .eyebrow {
+        color: #b3c4ce;
+      }
+      h3 {
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 2px;
+        margin-top: 32px;
+      }
+      ol {
+        list-style: none;
+        padding: 0;
+      }
+      li {
+        display: flex;
+        justify-content: space-between;
+        gap: 25px;
+        padding: 20px 0;
+        border-bottom: 1px solid #ffffff15;
+        font-size: 24px;
+      }
+      li small {
+        color: #ed8260;
+        margin-right: 28px;
+      }
+      li b {
+        font-family: monospace;
+        font-weight: 400;
+      }
+      #connection {
+        position: fixed;
+        bottom: 20px;
+        font: 10px monospace;
+        color: #9cb0bc;
+      }
+      @media (max-width: 600px) {
+        h1 {
+          font-size: 40px;
+        }
+        .live h2 {
+          font-size: 35px;
+        }
+        .big-score {
+          font-size: 60px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>ECHO <span style="color: #ed623e">SQUAD.</span></h1>
+      <span>LOCAL STATION / SAME DEVICE</span>
+    </header>
+    <section class="live">
+      <div>
+        <div class="eyebrow" id="live-label">
+          WAITING FOR THE NEXT CHALLENGER
+        </div>
+        <h2 id="live-title">Your move.</h2>
+        <span id="remaining" class="eyebrow"
+          >Open the arena in another window.</span
+        >
+      </div>
+      <div class="big-score" id="live-score">00000</div>
+    </section>
+    <h3>TODAY'S LOCAL BOARD</h3>
+    <ol id="board"></ol>
+    <p id="connection">Connecting to arena…</p>
+    <script type="module">
+      import { loadScores, localDate } from "./src/storage.js";
+      const $ = (id) => document.getElementById(id);
+      let last = 0;
+      function board(rows) {
+        $("board").replaceChildren();
+        rows
+          .filter((r) => r.day === localDate() && r.seed === 9019)
+          .slice(0, 8)
+          .forEach((r, i) => {
+            const li = document.createElement("li"),
+              name = document.createElement("span"),
+              rank = document.createElement("small"),
+              score = document.createElement("b");
+            rank.textContent = String(i + 1).padStart(2, "0");
+            name.append(rank, document.createTextNode(r.name));
+            score.textContent = r.score.toLocaleString();
+            li.append(name, score);
+            $("board").append(li);
+          });
+        if (!$("board").children.length) {
+          const li = document.createElement("li");
+          li.textContent = "Be the first on the board.";
+          $("board").append(li);
+        }
+      }
+      board(loadScores());
+      const bc =
+        typeof BroadcastChannel !== "undefined"
+          ? new BroadcastChannel("echo-squad-station")
+          : null;
+      if (bc)
+        bc.onmessage = ({ data: d }) => {
+          last = Date.now();
+          if (d.kind === "live") {
+            $("live-label").textContent =
+              d.state === "playing"
+                ? "CHALLENGER IN THE ARENA"
+                : d.state === "watching"
+                  ? "NEURAL MODEL DEMONSTRATION"
+                  : d.state === "results"
+                    ? "RUN COMPLETE"
+                    : "ARENA READY";
+            $("live-title").textContent = [
+              "Solo.",
+              "Make the connection.",
+              "Full squad.",
+            ][Math.min(2, d.phase)];
+            $("live-score").textContent = String(d.score).padStart(5, "0");
+            $("remaining").textContent = `${d.seconds} SECONDS REMAINING`;
+          }
+          if (d.rows) board(d.rows);
+        };
+      window.addEventListener("storage", () => board(loadScores()));
+      setInterval(() => {
+        $("connection").textContent =
+          Date.now() - last < 2000
+            ? "● Arena connected · no internet required"
+            : "Waiting for arena connection";
+      }, 1000);
+    </script>
+  </body>
+</html>

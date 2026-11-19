@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#171b1e" />
+    <title>ECHO SQUAD — Your past self is your teammate</title>
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to game</a>
+    <header class="site-header">
+      <a class="wordmark" href="./" aria-label="Echo Squad home"
+        ><svg viewBox="0 0 36 30" aria-hidden="true">
+          <path
+            d="M3 5h8L7 25H0zm12 0h8l-4 20h-8zm12 0h8l-4 20h-8z"
+            fill="currentColor"
+          /></svg
+        >ECHO SQUAD<span class="version">/ 001</span></a
+      >
+      <nav aria-label="Main navigation">
+        <button class="nav active" data-view="arena" aria-current="page">
+          Arena</button
+        ><button class="nav" data-view="lab">
+          Training lab <span class="nav-dot"></span></button
+        ><button class="nav" data-view="scores">Local scores</button>
+      </nav>
+      <div class="header-actions">
+        <button id="sound" class="text-button" aria-pressed="false">
+          Sound off</button
+        ><button id="station" class="station">Spectator ↗</button>
+      </div>
+    </header>
+    <main id="content">
+      <section id="arena" class="view">
+        <div class="title-row">
+          <div>
+            <div class="eyebrow">
+              <span class="tiny-cross">✳</span> A ONE-PLAYER TEAM SPORT
+            </div>
+            <h1>ECHO <span>SQUAD.</span></h1>
+          </div>
+          <div class="intro">
+            <p>Your past self is your teammate.</p>
+            <p>Three passes. Sixty seconds.<br />Make your next move count.</p>
+          </div>
+        </div>
+        <div class="game-layout">
+          <section class="arena-panel" aria-label="Game arena">
+            <div class="hud">
+              <div class="passes" aria-label="Current pass">
+                <span class="pass selected" data-pass="0">01 <b>SOLO</b></span
+                ><span class="pass" data-pass="1">02 <b>LINK</b></span
+                ><span class="pass" data-pass="2">03 <b>SQUAD</b></span>
+              </div>
+              <div class="clock">
+                <span id="clock">60</span><small>SEC</small>
+              </div>
+              <div class="score">
+                <small>YOUR SCORE</small><strong id="score">00000</strong>
+              </div>
+            </div>
+            <div class="stage" id="stage">
+              <canvas
+                id="game"
+                width="960"
+                height="560"
+                tabindex="0"
+                aria-label="Move your mouse or use arrow keys to steer. Collect blue sparks. In pass two, sweep orange diamonds with the line to your replay teammate. In pass three, surround gold cores with your squad."
+              ></canvas>
+              <div id="welcome" class="welcome">
+                <div class="eyebrow">MEET YOUR NEW TEAM.</div>
+                <h2>YOU.<br />YOU.<br /><span>AND YOU.</span></h2>
+                <p>
+                  Every 20 seconds, your last route<br />returns as a teammate.
+                  Play together.
+                </p>
+                <div class="mode-select" aria-label="Game mode">
+                  <button id="solo-mode" class="chosen" aria-pressed="true">
+                    Solo run</button
+                  ><button id="rival-mode" aria-pressed="false" disabled>
+                    Vs neural squad
+                  </button>
+                </div>
+                <button id="start" class="primary">
+                  Enter the arena <span>↗</span></button
+                ><small class="controls-note"
+                  >MOUSE / ARROW KEYS · NO CLICKING NEEDED</small
+                >
+              </div>
+              <div id="transition" class="pass-transition" hidden>
+                <span id="transition-label">ECHO ONLINE</span>
+                <h2 id="transition-title">Meet your past self.</h2>
+                <p id="transition-copy">
+                  Sweep orange diamonds with the line between you.
+                </p>
+              </div>
+              <div id="pause-panel" class="pause-panel" hidden>
+                <div class="eyebrow">TAKE A BREATH</div>
+                <h2>Paused.</h2>
+                <p>The clock waits for you.</p>
+                <button id="resume" class="primary">Resume run →</button
+                ><button id="abandon" class="text-button">End this run</button>
+              </div>
+              <div id="results" class="results" hidden>
+                <div class="eyebrow">THREE OF YOU. ONE SCORE.</div>
+                <h2 id="result-score">0</h2>
+                <p id="result-message">Your squad is complete.</p>
+                <div id="result-split" class="result-split"></div>
+                <form id="save-form">
+                  <label for="player-name">Name for the local board</label>
+                  <div class="save-row">
+                    <input
+                      id="player-name"
+                      maxlength="18"
+                      placeholder="Your callsign"
+                      autocomplete="off"
+                      required
+                    /><button class="primary" type="submit">
+                      Save score ↗
+                    </button>
+                  </div>
+                </form>
+                <p id="save-status" role="status"></p>
+                <div class="result-actions">
+                  <button id="again" class="primary">Run it back ↗</button
+                  ><button id="download-replay" class="text-button">
+                    Download replay ↓
+                  </button>
+                </div>
+              </div>
+              <div id="demo-label" class="demo-label">
+                LIVE SIMULATION / SCRIPTED DEMO
+              </div>
+              <div id="rival-hud" class="rival-hud" hidden>
+                NEURAL SQUAD <strong id="rival-score">0</strong>
+              </div>
+            </div>
+            <div class="arena-footer">
+              <span id="state-label"><i></i> Arena ready</span
+              ><span id="game-hint">Move to collect. Come back stronger.</span
+              ><button id="pause" class="text-button" disabled>
+                Pause <kbd>ESC</kbd>
+              </button>
+            </div>
+          </section>
+          <aside class="manual">
+            <div class="manual-heading">
+              <span>THE PLAYBOOK</span><span>↙</span>
+            </div>
+            <article>
+              <span class="rule-icon spark">✦</span>
+              <div>
+                <h3>Find your rhythm.</h3>
+                <p>
+                  Steer through blue sparks.<br />Your route is being recorded.
+                </p>
+                <small>PASS 01 · +10 EACH</small>
+              </div>
+            </article>
+            <article>
+              <span class="rule-icon diamond">◇</span>
+              <div>
+                <h3>Make the connection.</h3>
+                <p>
+                  Your replay joins you. Sweep orange diamonds with your link.
+                </p>
+                <small>PASS 02 · +35 EACH</small>
+              </div>
+            </article>
+            <article>
+              <span class="rule-icon triangle">△</span>
+              <div>
+                <h3>Work the whole angle.</h3>
+                <p>
+                  Two replays. One squad.<br />Surround gold cores to score.
+                </p>
+                <small>PASS 03 · +90 EACH</small>
+              </div>
+            </article>
+            <div class="manual-bottom">
+              <span class="small-label">THE NEURAL CHALLENGE</span>
+              <p>Can you beat a squad that learned to play?</p>
+              <button class="inline-link" data-go="lab">
+                Meet the model <span>↗</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+        <div class="below-arena">
+          <span>01 — RECORD. &nbsp; 02 — RECONNECT. &nbsp; 03 — REPEAT.</span
+          ><span>Made for the next person in line.</span>
+        </div>
+      </section>
+      <section id="lab" class="view" hidden>
+        <div class="title-row">
+          <div>
+            <div class="eyebrow">THE GAME BEHIND THE GAME</div>
+            <h1>FIELD <span>NOTES.</span></h1>
+          </div>
+          <div class="intro">
+            <p>Small network. Inspectable evidence.</p>
+            <p>
+              Actual training runs, including<br />the parts that didn't work.
+            </p>
+          </div>
+        </div>
+        <div id="lab-content" aria-live="polite">
+          <p class="loading">Loading experiment artifacts…</p>
+        </div>
+      </section>
+      <section id="scores" class="view" hidden>
+        <div class="title-row">
+          <div>
+            <div class="eyebrow">ONE MACHINE. EVERY CHALLENGER.</div>
+            <h1>LOCAL <span>LEGENDS.</span></h1>
+          </div>
+          <div class="intro">
+            <p>Your station. Your competition.</p>
+            <p>Scores stay on this device.<br />Same arena seed. Same rules.</p>
+          </div>
+        </div>
+        <div class="board-toolbar">
+          <div class="mode-select">
+            <button id="today-board" class="chosen">Today</button
+            ><button id="all-board">All time</button>
+          </div>
+          <button id="export-scores" class="text-button">
+            Export scores ↓
+          </button>
+        </div>
+        <div id="scoreboard"></div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <span
+        >ECHO SQUAD <span class="footer-divider">/</span> INDEPENDENT HACKATHON
+        BUILD</span
+      ><span id="offline-status">Checking offline readiness…</span
+      ><a href="./README.md" target="_blank" rel="noopener">Build notes ↗</a>
+    </footer>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
