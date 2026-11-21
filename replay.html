@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ECHO SQUAD — Replay room</title>
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./replay.css" />
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to replay</a>
+    <header class="site-header">
+      <a class="wordmark" href="./"
+        >ECHO SQUAD <span class="version">/ REPLAY ROOM</span></a
+      >
+      <a class="inline-link" href="./">Back to the arena ↗</a>
+    </header>
+    <main id="content">
+      <div class="title-row">
+        <div>
+          <div class="eyebrow">EVERY MOVE, BACK ON THE TABLE</div>
+          <h1>RUN IT <span>BACK.</span></h1>
+        </div>
+        <div class="intro">
+          <p>Find the moment your squad clicked.</p>
+          <p>Pause. Scrub. See what your past selves made possible.</p>
+        </div>
+      </div>
+      <div class="replay-layout">
+        <section aria-label="Replay arena">
+          <div class="replay-meta">
+            <span id="replay-pass">NO REPLAY LOADED</span
+            ><span>RUNNING SCORE <strong id="replay-score">00000</strong></span>
+          </div>
+          <div class="stage">
+            <canvas
+              id="replay-canvas"
+              role="img"
+              aria-label="Recorded player and replay teammates in the arena"
+            ></canvas>
+          </div>
+          <div class="replay-transport">
+            <button id="replay-toggle" class="primary" disabled>
+              Play replay
+            </button>
+            <label class="speed-label" for="replay-speed"
+              >Speed
+              <select id="replay-speed" disabled>
+                <option value="0.5">½×</option>
+                <option value="1" selected>1×</option>
+                <option value="2">2×</option>
+              </select></label
+            >
+            <output id="replay-time" for="replay-timeline"
+              >00:00 / 01:00</output
+            >
+          </div>
+          <label class="small-label" for="replay-timeline"
+            >REPLAY TIMELINE</label
+          >
+          <input
+            id="replay-timeline"
+            type="range"
+            min="0"
+            max="1800"
+            value="0"
+            step="1"
+            disabled
+          />
+          <p class="replay-help">
+            Space plays or pauses. Use the timeline’s arrow keys to inspect each
+            recorded frame. Pass breaks are skipped.
+          </p>
+        </section>
+        <aside class="replay-notes">
+          <span class="small-label">THE THREE PASSES</span>
+          <div class="replay-passes">
+            <button data-seek="0" disabled>
+              <span>01 / SOLO</span><strong id="pass-score-0">—</strong>
+            </button>
+            <button data-seek="600" disabled>
+              <span>02 / LINK</span><strong id="pass-score-1">—</strong>
+            </button>
+            <button data-seek="1200" disabled>
+              <span>03 / SQUAD</span><strong id="pass-score-2">—</strong>
+            </button>
+          </div>
+          <p id="replay-summary" role="status">
+            Finish a run and choose Watch this run, or open a downloaded replay
+            below.
+          </p>
+          <button id="replay-example" class="station">
+            Open neural example →
+          </button>
+          <p class="replay-help">
+            A saved run by the trained controller. Starts paused.
+          </p>
+          <label class="small-label" for="replay-file"
+            >OPEN A REPLAY FILE</label
+          >
+          <input id="replay-file" type="file" accept=".json,application/json" />
+          <p id="replay-error" role="alert"></p>
+          <p class="replay-help">
+            Files stay on this device. The score is recalculated from the routes
+            before playback.
+          </p>
+        </aside>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <span>ECHO SQUAD / BUILD 0.3.0</span
+      ><a href="./README.md">Build notes ↗</a>
+    </footer>
+    <script type="module" src="./src/replay-viewer.js"></script>
+  </body>
+</html>

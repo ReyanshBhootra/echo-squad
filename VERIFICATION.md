@@ -1,3 +1,15 @@
+# Replay room — November 21, 2026
+
+Build 0.3.0 adds a separate replay viewer, result-screen Watch this run action, local file import and a saved neural-controller example. The engine validates schema/rules, seed, complete bounded routes, and scores; rebuilds all 1,800 simulation steps; and uses two-second snapshots for backward seeking. No training or simulation rules changed.
+
+All 20 Node tests passed, including route/target/score/ghost reproduction around both pass boundaries and completion; seeking backward then resuming; malformed/oversized/foreign files; score tampering; and stripping unknown imported metadata. App, replay engine/viewer and export script syntax checks passed.
+
+Actual in-app browser observations: example loaded paused with total 6465 and pass totals 960/1655/3850; pass-three jump showed 40 seconds and 2615 running points; timeline completion showed 60 seconds and 6465; playback from frame1799 stopped naturally at1800 with Watch again; local JSON import reset to the beginning; importing research/manifest.json showed an invalid-seed error without losing the valid replay. Full-page preview saved outside the source repo at outputs/replay-room.jpg.
+
+Limit: a fresh end-to-end finished-game → Watch this run browser journey was attempted but not completed. The in-app browser throttled the game clock heavily during a normal-control run, which later reached its existing inactivity reset. The exported-run engine path is tested; no full-run browser handoff, new mobile test or current server-off offline test is claimed. New replay assets are included in the service-worker cache list. Human comfort with the native cursor is still unconfirmed.
+
+Earlier evidence follows.
+
 # Native cursor follow-up — November 21, 2026
 
 The user reported continued lag/discomfort after the prior fix. Build 0.2.1 uses the browser-native crosshair and suppresses the mouse player canvas glyph/halo/label. It retains the canvas player for keyboard/touch. Current browser checks verified crosshair activation, keyboard fallback, Escape pause and lobby restoration. Footer identified BUILD 0.2.1. Cache v4 prevents using the previous cached presentation after successful update. No timing benchmark or user comfort confirmation is claimed. Rules and saved neural artifacts are unchanged.

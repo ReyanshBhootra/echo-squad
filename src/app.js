@@ -4,6 +4,7 @@ import { predict, makeModel } from "./neural.js";
 import { draw } from "./render.js";
 import { loadScores, saveScore, download, localDate } from "./storage.js";
 import { renderLab } from "./lab.js";
+import { exportReplay, REPLAY_KEY } from "./replay.js";
 const $ = (id) => document.getElementById(id),
   canvas = $("game"),
   ctx = canvas.getContext("2d");
@@ -384,17 +385,16 @@ $("save-form").onsubmit = (e) => {
 };
 $("player-name").addEventListener("input", () => (lastInput = Date.now()));
 $("download-replay").onclick = () =>
-  download(
-    "echo-squad-replay.json",
-    JSON.stringify({
-      schema: 1,
-      rules: RULES,
-      seed: world.seed,
-      score: world.score,
-      byPass: world.byPass,
-      tracks: world.tracks,
-    }),
-  );
+  download("echo-squad-replay.json", JSON.stringify(exportReplay(world)));
+$("watch-replay").onclick = () => {
+  try {
+    sessionStorage.setItem(REPLAY_KEY, JSON.stringify(exportReplay(world)));
+    location.assign("./replay.html");
+  } catch {
+    $("save-status").textContent =
+      "Replay storage is unavailable. Download your replay and open it in the Replay room.";
+  }
+};
 function renderBoard() {
   const rows = loadScores().filter(
     (r) => r.seed === 9019 && (!boardToday || r.day === localDate()),
@@ -574,7 +574,7 @@ window.echoSquad = {
       position: { x: world.p.x, y: world.p.y },
       pointer: pointer.active ? { x: pointer.x, y: pointer.y } : null,
       rules: RULES,
-      build: "0.2.1-native-pointer",
+      build: "0.3.0-replay-room",
       nativePointer: $("stage").classList.contains("mouse-control"),
     };
   },

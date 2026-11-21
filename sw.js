@@ -1,10 +1,14 @@
-const CACHE = "echo-squad-v4-native-pointer";
+const CACHE = "echo-squad-v5-replay-room";
 const FILES = [
   "./",
   "./index.html",
   "./style.css",
   "./icon.svg",
   "./spectator.html",
+  "./replay.html",
+  "./replay.css",
+  "./src/replay.js",
+  "./src/replay-viewer.js",
   "./src/app.js",
   "./src/controls.js",
   "./src/sim.js",
@@ -14,6 +18,7 @@ const FILES = [
   "./src/lab.js",
   "./models/policy.json",
   "./research/manifest.json",
+  "./research/neural-example.json",
   "./research/learning.json",
   "./research/evaluation.json",
   "./research/evaluation.csv",

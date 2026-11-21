@@ -14,7 +14,7 @@ Open http://127.0.0.1:4173 in a modern desktop browser. Serve over HTTP, rather 
 
 ## Play
 
-Build 0.2.1: move the native crosshair inside the arena. It is your player marker; there is no canvas drone chasing behind it. Mouse coordinates feed scoring and replay directly, with no acceleration or drift. Arrow keys/WASD also work. No clicking is needed during play. Touch dragging also steers, but desktop is the primary target.
+Build 0.3.0: move the native crosshair inside the arena. It is your player marker; there is no canvas drone chasing behind it. Mouse coordinates feed scoring and replay directly, with no acceleration or drift. Arrow keys/WASD also work. No clicking is needed during play. Touch dragging also steers, but desktop is the primary target.
 
 - Pass 1, 20 seconds: briefly hold over blue sparks, 10 points each.
 - Pass 2, 20 seconds: your first route replays. Use the line between you to sweep orange diamonds, 35 points each.
@@ -23,6 +23,12 @@ Build 0.2.1: move the native crosshair inside the arena. It is your player marke
 Targets need two consecutive contact samples to collect, preventing random flickering across the arena from dominating the score. Every five seconds, a fresh deterministic target wave appears. Both sides use the same layout seed, time, absolute-position control interface and contact scoring. Short explanations between passes pause both simulations. Escape pauses; the run also pauses on tab/window focus loss. An inactive run resets after 18 seconds of no steering input. Result screens reset after 60 seconds; save your score first. Scores are stored locally, capped at 200, and never sent to a server. Do not use public leaderboards as an anti-cheat system; browser-local records are editable.
 
 Vs neural squad runs the trained controller in a separate identical arena. It has its own replay teammates and target collection; its score is shown without adding another moving cursor to your arena. The AI does not steal your targets. Open Spectator on the same browser/origin for a local station display.
+
+## Replay room
+
+After a finished run, choose **Watch this run**. The routes open in the same tab, paused. Replay room is also linked beneath the arena: import a downloaded JSON replay or choose **Open neural example**. Play/pause, ½×/1×/2× speed, pass jumps and a frame-accurate timeline let you inspect the run. Imported routes are validated and their scores recalculated before playback; incompatible rules, incomplete routes and score mismatches are rejected. Files stay on this device. This is consistency checking, not authentication or anti-cheat.
+
+The included neural example is a generated controller run on arena 9019: 6,465 points (960 / 1,655 / 3,850). It is not a human playtest or an additional held-out evaluation. Reproduce it with `node scripts/export-example.mjs`. Current replay schema supports completed three-pass runs under echo-0.2-precision; older momentum-rule replays are incompatible.
 
 ## Train and verify
 
@@ -39,6 +45,7 @@ Training regenerates model files and experiment artifacts deterministically, apa
 - src/neural.js: 16 → 32 → 2 target-preference network, inference and SGD backpropagation.
 - scripts/train.mjs: synthetic examples, three independent runs, validation selection, held-out evaluation.
 - src/app.js / render.js: station lifecycle, accessible HTML controls and canvas presentation.
+- src/replay.js / replay-viewer.js: validated reconstruction, cached timeline seeking and replay controls.
 - src/lab.js: charts and tables built directly from actual experiment artifacts.
 - spectator.html / sw.js: local spectator sync and offline assets.
 - tests/: meaningful simulation, replay and learning checks.

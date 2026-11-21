@@ -1,0 +1,139 @@
+.replay-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 38px;
+}
+.replay-meta,
+.replay-transport {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.replay-meta {
+  padding: 14px 18px;
+  color: var(--paper);
+  background: #1d2a32;
+  font:
+    11px ui-monospace,
+    monospace;
+}
+.replay-meta strong {
+  color: var(--blue);
+  margin-left: 10px;
+  font-size: 19px;
+}
+.replay-transport {
+  margin: 18px 0;
+  flex-wrap: wrap;
+}
+.speed-label {
+  font-size: 12px;
+}
+select {
+  font: inherit;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 8px;
+  margin-left: 6px;
+}
+select:focus-visible {
+  outline: 3px solid #287db4;
+  outline-offset: 3px;
+}
+#replay-time {
+  font:
+    12px ui-monospace,
+    monospace;
+}
+#replay-timeline {
+  display: block;
+  width: 100%;
+  margin: 15px 0;
+  accent-color: #287db4;
+  cursor: ew-resize;
+}
+.replay-help {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.replay-notes {
+  border-top: 2px solid var(--ink);
+  padding-top: 20px;
+}
+.replay-passes {
+  margin: 16px 0 26px;
+}
+.replay-passes button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 20px 10px;
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.replay-passes button[aria-current="true"] {
+  background: #1d23270a;
+  box-shadow: inset 3px 0 var(--orange);
+}
+.replay-passes strong {
+  font:
+    20px ui-monospace,
+    monospace;
+}
+#replay-summary {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+#replay-file {
+  display: block;
+  width: 100%;
+  font-size: 12px;
+  margin-top: 15px;
+}
+#replay-file::file-selector-button {
+  font: inherit;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  margin-right: 8px;
+}
+#replay-error {
+  color: #a22c17;
+  font-size: 13px;
+  line-height: 1.5;
+}
+@media (max-width: 900px) {
+  .replay-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .replay-passes {
+    display: flex;
+    gap: 12px;
+  }
+  .replay-passes button {
+    gap: 12px;
+  }
+}
+@media (max-width: 480px) {
+  .replay-passes {
+    display: block;
+  }
+  .replay-transport {
+    gap: 12px;
+  }
+  .replay-meta {
+    padding: 12px;
+    font-size: 9px;
+  }
+  .replay-meta strong {
+    font-size: 16px;
+  }
+}

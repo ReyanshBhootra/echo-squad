@@ -9,6 +9,7 @@ export function draw(
     ghostFraction = 0,
     preview = false,
     hidePlayer = false,
+    playerLabel = "YOU",
   } = {},
 ) {
   const canvas = ctx.canvas,
@@ -168,7 +169,7 @@ export function draw(
     ctx.fillStyle = c;
     ctx.font = "8px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(i === 0 ? "YOU" : `ECHO 0${i}`, p.x, p.y + 33);
+    ctx.fillText(i === 0 ? playerLabel : `ECHO 0${i}`, p.x, p.y + 33);
   });
   for (const p of particles) {
     ctx.globalAlpha = Math.max(0, 1 - p.age / 0.65);
