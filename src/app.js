@@ -9,6 +9,10 @@ const $ = (id) => document.getElementById(id),
   canvas = $("game"),
   ctx = canvas.getContext("2d");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+let effectsPreference = "on";
+try {
+  effectsPreference = localStorage.getItem("echo-squad-effects") || "on";
+} catch {}
 const channel =
   typeof BroadcastChannel !== "undefined"
     ? new BroadcastChannel("echo-squad-station")
@@ -32,6 +36,9 @@ let pointer = { x: W / 2, y: H / 2, active: false },
   mouseInside = false,
   keys = new Set(),
   sound = false,
+  effects = !reduced.matches && effectsPreference !== "quiet",
+  chain = 0,
+  lastCollect = -Infinity,
   audio = null,
   lastBeep = 0;
 const formatter = new Intl.NumberFormat("en-US");
@@ -65,8 +72,12 @@ function beep(kind) {
       g = audio.createGain();
     o.connect(g);
     g.connect(audio.destination);
-    o.type = "sine";
-    o.frequency.value = [540, 720, 960][kind];
+    o.type = "triangle";
+    o.frequency.setValueAtTime([440, 660, 880][kind], audio.currentTime);
+    o.frequency.exponentialRampToValueAtTime(
+      [660, 990, 1320][kind],
+      audio.currentTime + 0.09,
+    );
     g.gain.setValueAtTime(0.035, audio.currentTime);
     g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.12);
     o.start();
@@ -78,7 +89,7 @@ function beep(kind) {
   }
 }
 function motion(el) {
-  if (reduced.matches) return;
+  if (!effects || reduced.matches) return;
   el.animate(
     [
       { opacity: 0, transform: "scale(.97)" },
@@ -86,6 +97,54 @@ function motion(el) {
     ],
     { duration: 200, easing: "cubic-bezier(.23,1,.32,1)" },
   );
+}
+function setEffects(value, remember = false) {
+  if (remember) {
+    effectsPreference = value ? "on" : "quiet";
+    try {
+      localStorage.setItem("echo-squad-effects", effectsPreference);
+    } catch {}
+  }
+  effects = value && !reduced.matches;
+  document.body.classList.toggle("quiet-effects", !effects);
+  $("effects").textContent = effects ? "Effects on" : "Effects quiet";
+  $("effects").setAttribute("aria-pressed", String(effects));
+  $("pause-effects").textContent = effects
+    ? "Effects on · switch to quiet"
+    : "Effects quiet · switch on";
+  $("pause-effects").setAttribute("aria-pressed", String(effects));
+  if (!effects) {
+    particles = [];
+    document.getAnimations().forEach((animation) => animation.cancel());
+  }
+}
+$("effects").onclick = () => setEffects(!effects, true);
+$("pause-effects").onclick = () => setEffects(!effects, true);
+reduced.addEventListener("change", () =>
+  setEffects(effectsPreference !== "quiet"),
+);
+setEffects(effects);
+let scoreAnimation = null;
+function feedback(events) {
+  if (!events.length) return;
+  chain =
+    world.total - lastCollect <= 45 ? chain + events.length : events.length;
+  lastCollect = world.total;
+  for (const event of events) {
+    if (effects) particles.push({ ...event, age: 0 });
+    beep(event.kind);
+  }
+  particles = particles.slice(-96);
+  if (effects) {
+    scoreAnimation?.cancel();
+    scoreAnimation = $("score").animate(
+      [
+        { transform: "scale(1.12)", color: "#7cecf4" },
+        { transform: "scale(1)", color: "#fff1de" },
+      ],
+      { duration: 200, easing: "cubic-bezier(.23,1,.32,1)" },
+    );
+  }
 }
 function showView(name) {
   if (activeView === "arena" && name !== "arena" && state === "playing")
@@ -130,6 +189,8 @@ function start() {
   saved = false;
   phaseHold = 0;
   particles = [];
+  chain = 0;
+  lastCollect = -Infinity;
   pointer = { x: W / 2, y: H / 2, active: false };
   keys.clear();
   lastInput = Date.now();
@@ -160,6 +221,8 @@ function watch(trained) {
   state = "watching";
   phaseHold = 0;
   particles = [];
+  chain = 0;
+  lastCollect = -Infinity;
   accumulator = 0;
   for (const id of ["welcome", "results", "pause-panel", "transition"])
     $(id).hidden = true;
@@ -235,6 +298,10 @@ function finish() {
   lastInput = Date.now();
 }
 function updateHud() {
+  $("chain-count").textContent =
+    ["playing", "watching"].includes(state) && world.total - lastCollect <= 45
+      ? String(chain).padStart(2, "0")
+      : "—";
   const demo = state === "idle" || state === "watching";
   $("clock").textContent =
     demo && state === "idle"
@@ -263,7 +330,7 @@ function updateHud() {
       ? "Move to collect. Come back stronger."
       : [
           "Touch blue sparks. Pause briefly to collect.",
-          "Sweep orange diamonds with your link.",
+          "Sweep pink diamonds with your link.",
           "Surround gold cores with your squad.",
         ][Math.min(world.phase, 2)];
   if (rival) $("rival-score").textContent = formatter.format(rival.score);
@@ -477,6 +544,7 @@ function frame(now) {
         accumulator -= DT;
         if (state === "watching") {
           step(world, safePrediction(demoModel, world));
+          feedback(world.events);
           if (world.done) {
             world = createWorld(9019);
           }
@@ -485,10 +553,7 @@ function frame(now) {
           const phase = world.phase;
           step(world, input());
           if (rival) step(rival, safePrediction(model, rival));
-          for (const event of world.events) {
-            particles.push({ ...event, age: 0 });
-            beep(event.kind);
-          }
+          feedback(world.events);
           if (world.done) {
             finish();
             break;
@@ -496,15 +561,19 @@ function frame(now) {
           if (world.phase !== phase) {
             phaseHold = 2;
             $("transition").hidden = false;
+            $("transition").dataset.reveal = String(world.phase + 1).padStart(
+              2,
+              "0",
+            );
             $("transition-label").textContent =
               world.phase === 1 ? "ECHO 01 ONLINE" : "FULL SQUAD ONLINE";
             $("transition-title").textContent =
               world.phase === 1
-                ? "Meet your past self."
-                : "Three of you. One team.";
+                ? "Your crew just doubled."
+                : "Full crew. Full send.";
             $("transition-copy").textContent =
               world.phase === 1
-                ? "Sweep orange diamonds with the line between you."
+                ? "Sweep pink diamonds with the line between you."
                 : "Surround gold cores with the triangle you create together.";
             motion($("transition"));
             accumulator = 0;
@@ -518,8 +587,11 @@ function frame(now) {
     const nativePointer = syncCursor();
     if (!reduced.matches || state !== "idle" || now % 500 < 30)
       draw(ctx, world, {
+        motion:
+          effects && ["playing", "watching"].includes(state) && phaseHold <= 0,
+        time: now / 1000,
         hidePlayer: nativePointer,
-        particles,
+        particles: effects ? particles : [],
         preview: state === "idle",
         playerPosition:
           state === "playing" && phaseHold <= 0 && pointer.active
@@ -574,7 +646,7 @@ window.echoSquad = {
       position: { x: world.p.x, y: world.p.y },
       pointer: pointer.active ? { x: pointer.x, y: pointer.y } : null,
       rules: RULES,
-      build: "0.3.0-replay-room",
+      build: "0.4.0-after-hours",
       nativePointer: $("stage").classList.contains("mouse-control"),
     };
   },

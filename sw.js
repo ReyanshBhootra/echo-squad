@@ -1,8 +1,11 @@
-const CACHE = "echo-squad-v5-replay-room";
+const CACHE = "echo-squad-v6-after-hours";
 const FILES = [
   "./",
   "./index.html",
   "./style.css",
+  "./after-hours.css",
+  "./assets/after-hours.svg",
+  "./assets/crosshair.svg",
   "./icon.svg",
   "./spectator.html",
   "./replay.html",

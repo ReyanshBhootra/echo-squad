@@ -1,3 +1,15 @@
+# After Hours — November 21, 2026
+
+Build 0.4.0 is a presentation revision: original illustrated lobby, dark neon court, cached static floor, glowing targets/links, localized pickup effects, score feedback, pass reveals and cosmetic pickup streak. Simulation rules, training and model artifacts are unchanged. Quiet effects is available in both lobby and pause screen; local preference persistence was added after the browser run. Synthesized pickup chimes are opt-in; no listening test is claimed.
+
+All20 Node tests and app/renderer syntax checks passed. Existing native-pointer renderer regression and exact held-out model reproduction still pass. No additional training/evaluation performed.
+
+Actual in-app browser: checked the narrow layout at clientWidth419 with scrollWidth419; quiet toggle set body.quiet-effects and computed button pseudo-element animationName none. Checked desktop breakpoint1280x800: Let's ride bottom702.75 pixels and no horizontal overflow. Temporary viewport override was reset. Native cursor CSS loaded assets/crosshair.svg with hotspot16,16 and crosshair fallback. Pause-screen quiet toggle and resume worked. A normal-control run completed all1800 steps/three passes: score965, splits0/250/715; pass reveals and cosmetic streak were observed. Watch this run then opened the paused replay and recalculated965; seeking to frame1800 showed965. No browser console errors in the captured log. This closes the prior full-run replay-handoff verification gap. No leaderboard row was saved. Lab loaded the same Experiment003 results successfully.
+
+Full-page lobby screenshot: outputs/after-hours-lobby.jpg (outside source repo). These are tool-driven checks, not a human enjoyment or comfort test. The user subsequently selected Visual direction feels closer. No corresponding confirmation of game enjoyment or comfort has been received. No public deployment, registration, submission or new server-off offline test is claimed. The new CSS/SVG assets are included in service-worker cachev6.
+
+Earlier verification follows.
+
 # Replay room — November 21, 2026
 
 Build 0.3.0 adds a separate replay viewer, result-screen Watch this run action, local file import and a saved neural-controller example. The engine validates schema/rules, seed, complete bounded routes, and scores; rebuilds all 1,800 simulation steps; and uses two-second snapshots for backward seeking. No training or simulation rules changed.

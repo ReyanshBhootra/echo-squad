@@ -1,5 +1,76 @@
 import { W, H } from "./sim.js";
-const colors = ["#8dd7ff", "#ff916d", "#ead080"];
+const colors = ["#7cecf4", "#ff83ab", "#ffd18e"];
+const floors = new WeakMap();
+function paintFloor(ctx) {
+  const sky = ctx.createLinearGradient(0, 0, W, H);
+  if (sky?.addColorStop) {
+    sky.addColorStop(0, "#152132");
+    sky.addColorStop(0.55, "#141b2c");
+    sky.addColorStop(1, "#291d34");
+  }
+  ctx.fillStyle = sky || "#141b2c";
+  ctx.fillRect(0, 0, W, H);
+  // Static asphalt and court markings are cached, not rebuilt every frame.
+  ctx.strokeStyle = "#b2bad408";
+  ctx.lineWidth = 1;
+  for (let x = 80; x < W; x += 80) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = 80; y < H; y += 80) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#e5d7ef0a";
+  for (let i = 0; i < 200; i++)
+    ctx.fillRect((i * 137.37) % W, (i * 61.91) % H, 1, 1);
+  ctx.strokeStyle = "#f3d4e21b";
+  ctx.strokeRect(15, 15, W - 30, H - 30);
+  ctx.strokeStyle = "#f3d4e20b";
+  ctx.strokeRect(38, 38, W - 76, H - 76);
+  ctx.beginPath();
+  ctx.arc(W / 2, H / 2, 90, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(W / 2, 38);
+  ctx.lineTo(W / 2, H - 38);
+  ctx.stroke();
+  for (const [x, c] of [
+    [15, colors[0]],
+    [W - 15, colors[1]],
+  ]) {
+    ctx.strokeStyle = c;
+    ctx.shadowColor = c;
+    ctx.shadowBlur = 14;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, 45);
+    ctx.lineTo(x, H - 45);
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+  for (let i = 0; i < 10; i++) {
+    ctx.fillStyle = i % 2 ? "#ff83ab55" : "#ffd18e66";
+    ctx.fillRect(W / 2 - 85 + i * 18, 14, 10, 3);
+    ctx.fillRect(W / 2 - 85 + i * 18, H - 17, 10, 3);
+  }
+}
+function floor(ctx) {
+  let surface = floors.get(ctx);
+  if (!surface && ctx.canvas.ownerDocument) {
+    surface = ctx.canvas.ownerDocument.createElement("canvas");
+    surface.width = W;
+    surface.height = H;
+    paintFloor(surface.getContext("2d"));
+    floors.set(ctx, surface);
+  }
+  if (surface) ctx.drawImage(surface, 0, 0);
+  else paintFloor(ctx);
+}
 export function draw(
   ctx,
   s,
@@ -10,6 +81,8 @@ export function draw(
     preview = false,
     hidePlayer = false,
     playerLabel = "YOU",
+    motion = false,
+    time = 0,
   } = {},
 ) {
   const canvas = ctx.canvas,
@@ -22,7 +95,7 @@ export function draw(
     canvas.height = height;
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = "#151e24";
+  ctx.fillStyle = "#101623";
   ctx.fillRect(0, 0, width, height);
   const scale = Math.min(width / W, height / H);
   ctx.setTransform(
@@ -33,16 +106,7 @@ export function draw(
     (width - W * scale) / 2,
     (height - H * scale) / 2,
   );
-  ctx.fillStyle = "#151e24";
-  ctx.fillRect(0, 0, W, H);
-  // Quiet structural texture; targets and connections carry the contrast.
-  ctx.fillStyle = "#a5c4d012";
-  for (let x = 24; x < W; x += 24)
-    for (let y = 20; y < H; y += 24) {
-      ctx.beginPath();
-      ctx.arc(x, y, 0.8, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  floor(ctx);
   ctx.strokeStyle = "#9ab3c418";
   ctx.lineWidth = 1;
   ctx.strokeRect(15, 15, W - 30, H - 30);
@@ -78,7 +142,7 @@ export function draw(
     ...ghosts,
   ];
   if (drones.length === 3) {
-    ctx.fillStyle = "#ebc9740c";
+    ctx.fillStyle = "#ffd18e12";
     ctx.beginPath();
     ctx.moveTo(drones[0].x, drones[0].y);
     ctx.lineTo(drones[1].x, drones[1].y);
@@ -88,21 +152,44 @@ export function draw(
   }
   for (let a = 0; a < drones.length; a++)
     for (let b = a + 1; b < drones.length; b++) {
-      ctx.strokeStyle = b === 2 ? "#e8c56d55" : "#f2946855";
-      ctx.lineWidth = 1.5;
+      const color = colors[b];
+      ctx.strokeStyle = color + "aa";
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 9;
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(drones[a].x, drones[a].y);
       ctx.lineTo(drones[b].x, drones[b].y);
       ctx.stroke();
+      ctx.shadowBlur = 0;
+      if (motion) {
+        const t = (time * 0.45 + a * 0.33) % 1;
+        ctx.fillStyle = "#fff5e5";
+        ctx.beginPath();
+        ctx.arc(
+          drones[a].x + (drones[b].x - drones[a].x) * t,
+          drones[a].y + (drones[b].y - drones[a].y) * t,
+          2.3,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      }
     }
   for (const item of s.items) {
     if (!item.active || item.kind > (preview ? 2 : s.phase)) continue;
     const { x, y, kind } = item;
     ctx.save();
     ctx.translate(x, y);
+    if (motion) {
+      const pulse = 1 + Math.sin(time * 3 + item.id * 0.7) * 0.08;
+      ctx.scale(pulse, pulse);
+    }
     ctx.fillStyle = colors[kind];
     ctx.strokeStyle = colors[kind];
     ctx.lineWidth = 1.5;
+    ctx.shadowColor = colors[kind];
+    ctx.shadowBlur = kind === 0 ? 10 : 15;
     if (item.contact > 0) {
       ctx.strokeStyle = "#ffffffa0";
       ctx.beginPath();
@@ -122,11 +209,14 @@ export function draw(
       ctx.lineTo(-2, -2);
       ctx.closePath();
       ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#efffff";
+      ctx.fillRect(-1.5, -1.5, 3, 3);
     }
     if (kind === 1) {
       ctx.rotate(Math.PI / 4);
       ctx.strokeRect(-5, -5, 10, 10);
-      ctx.fillStyle = "#ff916d18";
+      ctx.fillStyle = "#ff83ab25";
       ctx.fillRect(-5, -5, 10, 10);
     }
     if (kind === 2) {
@@ -139,19 +229,21 @@ export function draw(
       }
       ctx.closePath();
       ctx.stroke();
-      ctx.fillStyle = "#ead080";
+      ctx.fillStyle = colors[2];
       ctx.fillRect(-2, -2, 4, 4);
     }
     ctx.restore();
   }
-  // Keep the arena still: no motion trails, auto-spinning echoes or rival cursor.
+  // The camera and pointer stay still; only feedback and link signals animate.
   drones.forEach((p, i) => {
     // The browser's native crosshair is the mouse player's sole visible marker.
     if (i === 0 && hidePlayer && !preview) return;
     const c = colors[i];
     ctx.save();
     ctx.translate(p.x, p.y);
-    ctx.strokeStyle = c + "35";
+    ctx.strokeStyle = c + "70";
+    ctx.shadowColor = c;
+    ctx.shadowBlur = 14;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(0, 0, 21, 0, Math.PI * 2);
@@ -165,6 +257,14 @@ export function draw(
     ctx.lineTo(-9, 9);
     ctx.closePath();
     ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "#fff8ee";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-3, 2);
+    ctx.lineTo(0, -5);
+    ctx.lineTo(3, 2);
+    ctx.stroke();
     ctx.restore();
     ctx.fillStyle = c;
     ctx.font = "8px monospace";
@@ -172,11 +272,33 @@ export function draw(
     ctx.fillText(i === 0 ? playerLabel : `ECHO 0${i}`, p.x, p.y + 33);
   });
   for (const p of particles) {
-    ctx.globalAlpha = Math.max(0, 1 - p.age / 0.65);
+    const progress = Math.min(1, p.age / 0.65);
+    ctx.globalAlpha = Math.max(0, 1 - progress);
     ctx.fillStyle = colors[p.kind];
-    ctx.font = "11px monospace";
+    if (motion) {
+      ctx.strokeStyle = colors[p.kind];
+      ctx.lineWidth = 2 * (1 - progress);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8 + progress * 32, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let i = 0; i < 6; i++) {
+        const a = (i * Math.PI) / 3,
+          r = 10 + progress * 27;
+        ctx.fillRect(
+          p.x + Math.cos(a) * r - 1.5,
+          p.y + Math.sin(a) * r - 1.5,
+          3,
+          3,
+        );
+      }
+    }
+    ctx.font = "bold 13px monospace";
     ctx.textAlign = "center";
-    ctx.fillText("+" + p.points, p.x, p.y - 12);
+    ctx.fillText(
+      (p.kind === 2 ? "SQUAD " : p.kind === 1 ? "LINK " : "") + "+" + p.points,
+      p.x,
+      p.y - 16 - (motion ? progress * 18 : 0),
+    );
   }
   ctx.globalAlpha = 1;
 }

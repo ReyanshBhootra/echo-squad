@@ -7,6 +7,7 @@
     <title>ECHO SQUAD — Your past self is your teammate</title>
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./after-hours.css" />
   </head>
   <body>
     <a class="skip" href="#content">Skip to game</a>
@@ -27,6 +28,9 @@
         ><button class="nav" data-view="scores">Local scores</button>
       </nav>
       <div class="header-actions">
+        <button id="effects" class="text-button" aria-pressed="true">
+          Effects on
+        </button>
         <button id="sound" class="text-button" aria-pressed="false">
           Sound off</button
         ><button id="station" class="station">Spectator ↗</button>
@@ -37,13 +41,16 @@
         <div class="title-row">
           <div>
             <div class="eyebrow">
-              <span class="tiny-cross">✳</span> A ONE-PLAYER TEAM SPORT
+              <span class="tiny-cross">✳</span> AFTER HOURS / A ONE-PLAYER TEAM
+              SPORT
             </div>
             <h1>ECHO <span>SQUAD.</span></h1>
           </div>
           <div class="intro">
-            <p>Your past self is your teammate.</p>
-            <p>Three passes. Sixty seconds.<br />Make your next move count.</p>
+            <p>One player. A whole crew.</p>
+            <p>
+              60 seconds under the lights.<br />Your past selves have your back.
+            </p>
           </div>
         </div>
         <div class="game-layout">
@@ -53,6 +60,9 @@
                 <span class="pass selected" data-pass="0">01 <b>SOLO</b></span
                 ><span class="pass" data-pass="1">02 <b>LINK</b></span
                 ><span class="pass" data-pass="2">03 <b>SQUAD</b></span>
+              </div>
+              <div class="chain">
+                <span>PICKUP STREAK</span><strong id="chain-count">—</strong>
               </div>
               <div class="clock">
                 <span id="clock">60</span><small>SEC</small>
@@ -67,14 +77,17 @@
                 width="960"
                 height="560"
                 tabindex="0"
-                aria-label="Move your mouse or use arrow keys to steer. Touch and briefly hold blue sparks. In pass two, sweep orange diamonds with the line to your replay teammate. In pass three, surround gold cores with your squad."
+                aria-label="Move your mouse or use arrow keys to steer. Touch and briefly hold blue sparks. In pass two, sweep pink diamonds with the line to your replay teammate. In pass three, surround gold cores with your squad."
               ></canvas>
               <div id="welcome" class="welcome">
-                <div class="eyebrow">MEET YOUR NEW TEAM.</div>
-                <h2>YOU.<br />YOU.<br /><span>AND YOU.</span></h2>
+                <div class="night-stamp" aria-hidden="true">
+                  <b>AFTER<br />HOURS</b>NO CREW REQUIRED
+                </div>
+                <div class="eyebrow">THE NIGHT IS YOURS.</div>
+                <h2>ROLL WITH<br /><span>YOURSELF.</span></h2>
                 <p>
                   Every 20 seconds, your last route<br />returns as a teammate.
-                  Play together.
+                  Build your crew. Own the night.
                 </p>
                 <div class="mode-select" aria-label="Game mode">
                   <button id="solo-mode" class="chosen" aria-pressed="true">
@@ -84,7 +97,7 @@
                   </button>
                 </div>
                 <button id="start" class="primary">
-                  Enter the arena <span>↗</span></button
+                  Let's ride <span>↗</span></button
                 ><small class="controls-note"
                   >MOUSE / ARROW KEYS · NO CLICKING NEEDED</small
                 >
@@ -93,13 +106,20 @@
                 <span id="transition-label">ECHO ONLINE</span>
                 <h2 id="transition-title">Meet your past self.</h2>
                 <p id="transition-copy">
-                  Sweep orange diamonds with the line between you.
+                  Sweep pink diamonds with the line between you.
                 </p>
               </div>
               <div id="pause-panel" class="pause-panel" hidden>
                 <div class="eyebrow">TAKE A BREATH</div>
                 <h2>Paused.</h2>
                 <p>The clock waits for you.</p>
+                <button
+                  id="pause-effects"
+                  class="text-button"
+                  aria-pressed="true"
+                >
+                  Effects on · switch to quiet
+                </button>
                 <button id="resume" class="primary">Resume run →</button
                 ><button id="abandon" class="text-button">End this run</button>
               </div>
@@ -167,7 +187,7 @@
               <div>
                 <h3>Make the connection.</h3>
                 <p>
-                  Your replay joins you. Sweep orange diamonds with your link.
+                  Your replay joins you. Sweep pink diamonds with your link.
                 </p>
                 <small>PASS 02 · +35 EACH</small>
               </div>
@@ -239,7 +259,7 @@
     <footer class="site-footer">
       <span
         >ECHO SQUAD <span class="footer-divider">/</span> INDEPENDENT HACKATHON
-        BUILD 0.3.0</span
+        BUILD 0.4.0</span
       ><span id="offline-status">Checking offline readiness…</span
       ><a href="./README.md" target="_blank" rel="noopener">Build notes ↗</a>
     </footer>

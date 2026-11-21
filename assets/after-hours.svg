@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 940" fill="none">
+ <defs>
+  <linearGradient id="sky" x2="0" y2="940" gradientUnits="userSpaceOnUse"><stop stop-color="#1c1236"/><stop offset=".45" stop-color="#a14375"/><stop offset=".7" stop-color="#fb9877"/><stop offset="1" stop-color="#181328"/></linearGradient>
+  <linearGradient id="sun" x2="0" y2="610" gradientUnits="userSpaceOnUse"><stop stop-color="#fff0bc"/><stop offset="1" stop-color="#ff739b"/></linearGradient>
+  <linearGradient id="road" x1="900" y1="560" x2="900" y2="940" gradientUnits="userSpaceOnUse"><stop stop-color="#25233d"/><stop offset="1" stop-color="#070c19"/></linearGradient>
+  <linearGradient id="water" x1="0" y1="530" x2="0" y2="940" gradientUnits="userSpaceOnUse"><stop stop-color="#b65b81"/><stop offset=".4" stop-color="#3c3458"/><stop offset="1" stop-color="#0b1527"/></linearGradient>
+  <linearGradient id="trail" x1="1000" y1="680" x2="1000" y2="940" gradientUnits="userSpaceOnUse"><stop stop-color="#ff7dad" stop-opacity="0"/><stop offset="1" stop-color="#ff7dad" stop-opacity=".75"/></linearGradient>
+  <pattern id="windows" width="21" height="23" patternUnits="userSpaceOnUse"><path d="M6 7h5v8H6z" fill="#ffce9c" opacity=".5"/></pattern>
+  <g id="palm">
+   <path d="M0 410C14 280 5 133-22 0L-9-3C28 132 37 279 30 410Z" fill="#0c1321"/>
+   <path d="M-16 0C-81-67-142-50-175 12C-104-22-62-5-16 0ZM-16 0C-55-94-110-114-156-89C-96-67-62-29-16 0ZM-16 0C-18-109 23-146 62-136C17-91 7-48-16 0ZM-16 0C66-88 132-61 159-5C86-43 35-23-16 0ZM-16 0C84-13 139 38 139 101C93 40 48 27-16 0ZM-16 0C-103 3-128 56-113 104C-80 49-53 28-16 0Z" fill="#0c1321"/>
+   <path d="M-16 0C36-24 94-16 131 22M-16 0C-73-35-126-20-147 9" stroke="#f0879b" stroke-opacity=".3" stroke-width="3"/>
+  </g>
+ </defs>
+ <path fill="url(#sky)" d="M0 0h1600v940H0z"/>
+ <circle cx="1100" cy="328" r="217" fill="url(#sun)"/>
+ <path d="M876 412h448M881 441h438M902 473h396M935 505h330M974 535h250" stroke="#a14d7d" stroke-width="10"/>
+ <path d="M0 544C350 527 480 555 770 546C1050 538 1350 532 1600 553V940H0Z" fill="url(#water)"/>
+ <g stroke="#edb09b" stroke-opacity=".28"><path d="M790 575h610M960 592h260M1100 612h440M870 632h480M1210 661h350M1010 698h320M1250 743h340M1100 796h360"/></g>
+ <g fill="#24243c">
+  <path d="M573 544V392h55v-38h36v190zM677 545V434h66v111zM758 544V307h87v237zM863 545V385h71v160zM1362 546V377h83v170zM1460 550V280h67v270zM1540 554V405h60v150z"/>
+  <path d="M778 307v-45h45v45M1482 280v-55h22v55"/>
+ </g>
+ <g fill="url(#windows)"><path d="M580 408h76v130h-76zM766 320h70v219h-70zM870 398h56v140h-56zM1370 390h68v150h-68zM1468 293h51v249h-51z"/></g>
+ <path d="M758 309h87M1460 281h67" stroke="#ffa2ac" stroke-width="4"/>
+ <path d="M0 626L584 550H869L1331 940H0Z" fill="#0e1728"/>
+ <path d="M-60 940L697 540H841L1400 940Z" fill="url(#road)"/>
+ <path d="M684 556L-35 940M847 560L1420 940" stroke="#fa7ea4" stroke-opacity=".8" stroke-width="5"/>
+ <path d="M709 559L125 940M827 563L1220 940" stroke="#89e0e9" stroke-opacity=".5" stroke-width="2"/>
+ <path d="M771 570L750 610M744 629L715 689M703 716L663 804M650 837L606 940" stroke="#f8bc9c" stroke-width="5"/>
+ <path d="M1053 700L1210 940M944 689L1075 940" stroke="url(#trail)" stroke-width="12"/>
+ <g transform="translate(1000 698) rotate(-12)">
+  <path d="M-72 18L-61-24L-33-44H42L67-23L78 21L62 38H-57Z" fill="#172134" stroke="#c7a3d0" stroke-width="2"/>
+  <path d="M-38-17L-24-33H31L46-16Z" fill="#eea4ba"/>
+  <path d="M-55 15H-22M28 15H62" stroke="#ff79aa" stroke-width="6"/>
+  <path d="M-63 30H64" stroke="#79f5f0" stroke-width="3"/>
+ </g>
+ <use href="#palm" transform="translate(1410 151) rotate(9) scale(1.8)"/>
+ <use href="#palm" transform="translate(1530 346) rotate(-8) scale(1.2)"/>
+ <use href="#palm" transform="translate(462 347) rotate(-13) scale(.65)"/>
+ <use href="#palm" transform="translate(565 411) scale(.39)"/>
+ <path d="M1145 110l13-5l10 8M1222 157l12-4l9 7M883 205l11-5l10 8" stroke="#35233c" stroke-width="3" stroke-linecap="round"/>
+ <path d="M0 915h1600v25H0z" fill="#070c19"/>
+</svg>
