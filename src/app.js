@@ -284,7 +284,7 @@ function finish() {
   $("result-insight").textContent = resultInsight(world);
   $("result-message").textContent = rival
     ? `Neural squad: ${formatter.format(rival.score)}. ${world.score > rival.score ? "You outplayed the model." : world.score === rival.score ? "A dead heat." : "The model takes this round."}`
-    : "One player. Three teammates. Your squad is complete.";
+    : "One player. One complete squad.";
   $("result-split").replaceChildren(
     ...world.byPass.map((v, i) => {
       const span = document.createElement("span");

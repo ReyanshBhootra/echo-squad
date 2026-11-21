@@ -2,6 +2,10 @@
 
 Your past self is your teammate. A 60-second, mouse-driven arcade game with replay teammates, a trained neural rival and an inspectable experiment lab.
 
+## Play online
+
+https://echo-squad-after-hours.alkalibutterfly8.chatgpt.site — public, no account required. Scores stay in each browser; the leaderboard is station-local.
+
 ## Run locally
 
 Requires Node.js 22 or later. No packages, accounts, external services, network assets or install step.
@@ -30,7 +34,7 @@ The first uncollected spark nearest the arena center is marked HOLD HERE until y
 
 ## Build for hosting
 
-Run `npm run build` to create `dist/`, a static site containing only the runtime assets, selected model and published experiment files. It works on static HTTPS hosting without a server backend. Sites configuration is in `.openai/hosting.json`; new hosting starts owner-private. The local development server still serves port4173.
+Run `npm run build` to create `dist/`, a static site containing only the runtime assets, selected model and published experiment files. It works on static HTTPS hosting without a server backend. Sites configuration is in `.openai/hosting.json`; the deployed game was made public at the entrant’s request. The local development server still serves port4173.
 
 ## After Hours presentation
 
@@ -64,6 +68,6 @@ Training regenerates model files and experiment artifacts deterministically, apa
 
 ## Hackathon status
 
-Local development build. Not registered, deployed or submitted by this project. The entrant handles registration and account access. No GRID dataset is used. PyCharm Community 2024.3 was used to navigate the project, format and run the independent Python evidence audit successfully; see JETBRAINS.md for the precise scope and evidence. No claim of human playtesting, biological brain simulation, scientific novelty or guaranteed prize.
+Public web build deployed with Sites. Hackathon registration and final Devpost submission remain unconfirmed. The entrant handles registration and account access. No GRID dataset is used. PyCharm Community 2024.3 was used to navigate the project, format and run the independent Python evidence audit successfully; see JETBRAINS.md for the precise scope and evidence. No claim of human playtesting, biological brain simulation, scientific novelty or guaranteed prize.
 
 Original code and procedural graphics/sound. Design guidance: Emil Kowalski's [design-engineering and animation skills](https://github.com/emilkowalski/skills), applied to restrained state transitions, press feedback and reduced-motion behavior. This is not an affiliation with Cloud9, JetBrains or NVIDIA.
