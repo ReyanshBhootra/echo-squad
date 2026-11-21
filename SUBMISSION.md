@@ -33,7 +33,7 @@ A higher bot score is not a better game. Player feedback exposed cursor discomfo
 ## Links and remaining submission work
 
 Demo: https://echo-squad-after-hours.alkalibutterfly8.chatgpt.site
-Source: public repository URL to insert after publication.
+Source: https://github.com/ReyanshBhootra/echo-squad
 Video: still to record and publish; use DEMO-SCRIPT.md.
 Methodology: research/EXPERIMENT.md.
 License: MIT.

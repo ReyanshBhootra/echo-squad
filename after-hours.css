@@ -14,7 +14,7 @@
 .mission-row strong {
   color: #7cecf4;
   font:
-    12px ui-monospace,
+    14px ui-monospace,
     monospace;
   white-space: nowrap;
 }
@@ -44,10 +44,10 @@
     flex-direction: column;
     gap: 6px;
     padding: 10px 15px;
-    font-size: 12px;
+    font-size: 14px;
   }
   .mission-row strong {
-    font-size: 11px;
+    font-size: 14px;
   }
 }
 :root {

@@ -6,6 +6,8 @@ Your past self is your teammate. A 60-second, mouse-driven arcade game with repl
 
 https://echo-squad-after-hours.alkalibutterfly8.chatgpt.site — public, no account required. Scores stay in each browser; the leaderboard is station-local.
 
+Source and reproducible evidence: https://github.com/ReyanshBhootra/echo-squad. Submission draft: SUBMISSION.md; video recording plan: DEMO-SCRIPT.md; workflow story: AI_SHOWCASE.md.
+
 ## Run locally
 
 Requires Node.js 22 or later. No packages, accounts, external services, network assets or install step.
