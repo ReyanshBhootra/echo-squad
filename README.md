@@ -14,7 +14,7 @@ Open http://127.0.0.1:4173 in a modern desktop browser. Serve over HTTP, rather 
 
 ## Play
 
-Move the mouse inside the arena: the drone follows it directly, with no acceleration or drift. Arrow keys/WASD also work. No clicking is needed during play. Touch dragging also steers, but desktop is the primary target.
+Build 0.2.1: move the native crosshair inside the arena. It is your player marker; there is no canvas drone chasing behind it. Mouse coordinates feed scoring and replay directly, with no acceleration or drift. Arrow keys/WASD also work. No clicking is needed during play. Touch dragging also steers, but desktop is the primary target.
 
 - Pass 1, 20 seconds: briefly hold over blue sparks, 10 points each.
 - Pass 2, 20 seconds: your first route replays. Use the line between you to sweep orange diamonds, 35 points each.

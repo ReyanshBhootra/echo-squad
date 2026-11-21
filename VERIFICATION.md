@@ -1,3 +1,11 @@
+# Native cursor follow-up — November 21, 2026
+
+The user reported continued lag/discomfort after the prior fix. Build 0.2.1 uses the browser-native crosshair and suppresses the mouse player canvas glyph/halo/label. It retains the canvas player for keyboard/touch. Current browser checks verified crosshair activation, keyboard fallback, Escape pause and lobby restoration. Footer identified BUILD 0.2.1. Cache v4 prevents using the previous cached presentation after successful update. No timing benchmark or user comfort confirmation is claimed. Rules and saved neural artifacts are unchanged.
+
+The renderer regression verifies that native mode hides the player while keeping echoes and the keyboard fallback. All 16 Node tests and syntax checks passed.
+
+The observations below describe build 0.2.0 and its earlier canvas pointer.
+
 # Verified direct-control revision — November 19, 2026
 
 ## Player feedback addressed

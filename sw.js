@@ -1,4 +1,4 @@
-const CACHE = "echo-squad-v3-direct";
+const CACHE = "echo-squad-v4-native-pointer";
 const FILES = [
   "./",
   "./index.html",

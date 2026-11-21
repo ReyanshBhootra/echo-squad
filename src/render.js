@@ -8,6 +8,7 @@ export function draw(
     playerPosition = null,
     ghostFraction = 0,
     preview = false,
+    hidePlayer = false,
   } = {},
 ) {
   const canvas = ctx.canvas,
@@ -144,6 +145,8 @@ export function draw(
   }
   // Keep the arena still: no motion trails, auto-spinning echoes or rival cursor.
   drones.forEach((p, i) => {
+    // The browser's native crosshair is the mouse player's sole visible marker.
+    if (i === 0 && hidePlayer && !preview) return;
     const c = colors[i];
     ctx.save();
     ctx.translate(p.x, p.y);

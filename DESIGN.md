@@ -10,3 +10,5 @@ Tables and charts expose real experiment results. Never replace underperforming 
 
 
 Player feedback revision: direct 1:1 mouse positioning, a single controlled marker, no chase/inertia, no movement trails, fixed-orientation echoes and no animated opponent ring. Ghost sample interpolation preserves smooth replay without adding player latency. A short stable-contact rule affects scoring, not pointer responsiveness. Model planning is adapted to the same absolute-position interface. Previous steering claims/results belong to archived experiment-001.
+
+Follow-up after continued discomfort: mouse mode now uses the native crosshair and omits the canvas player glyph, halo and YOU label. This avoids tying the visible mouse marker to requestAnimationFrame. Keyboard/touch keep the canvas player. No simulation, training or scoring change. Browser mode switching is verified; perceived comfort still needs user feedback.

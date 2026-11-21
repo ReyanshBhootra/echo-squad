@@ -1,12 +1,4 @@
-import {
-  createWorld,
-  step,
-  DT,
-  W,
-  H,
-  RULES,
-  pointAction,
-} from "./sim.js";
+import { createWorld, step, DT, W, H, RULES, pointAction } from "./sim.js";
 import { pointerPosition, keyboardAction } from "./controls.js";
 import { predict, makeModel } from "./neural.js";
 import { draw } from "./render.js";
@@ -36,6 +28,7 @@ let model = null,
   saved = false,
   labLoaded = false;
 let pointer = { x: W / 2, y: H / 2, active: false },
+  mouseInside = false,
   keys = new Set(),
   sound = false,
   audio = null,
@@ -289,12 +282,24 @@ function input() {
   return pointAction(pointer.active ? pointer : world.p);
 }
 function steer(e) {
+  mouseInside = e.pointerType === "mouse";
   pointer = {
     ...pointerPosition(e.clientX, e.clientY, canvas.getBoundingClientRect()),
     active: true,
   };
   lastInput = Date.now();
+  syncCursor();
 }
+function syncCursor() {
+  const native =
+    state === "playing" && phaseHold <= 0 && pointer.active && mouseInside;
+  $("stage").classList.toggle("mouse-control", native);
+  return native;
+}
+canvas.addEventListener("pointerleave", () => {
+  mouseInside = false;
+  syncCursor();
+});
 canvas.addEventListener("pointermove", (e) => {
   if (e.pointerType === "touch" && e.buttons === 0) return;
   steer(e);
@@ -331,6 +336,8 @@ document.addEventListener("keydown", (e) => {
   ) {
     e.preventDefault();
     keys.add(e.key);
+    pointer.active = false;
+    syncCursor();
     lastInput = Date.now();
   }
 });
@@ -508,8 +515,10 @@ function frame(now) {
     particles = particles
       .map((p) => ({ ...p, age: p.age + elapsed }))
       .filter((p) => p.age < 0.65);
+    const nativePointer = syncCursor();
     if (!reduced.matches || state !== "idle" || now % 500 < 30)
       draw(ctx, world, {
+        hidePlayer: nativePointer,
         particles,
         preview: state === "idle",
         playerPosition:
@@ -565,6 +574,8 @@ window.echoSquad = {
       position: { x: world.p.x, y: world.p.y },
       pointer: pointer.active ? { x: pointer.x, y: pointer.y } : null,
       rules: RULES,
+      build: "0.2.1-native-pointer",
+      nativePointer: $("stage").classList.contains("mouse-control"),
     };
   },
 };

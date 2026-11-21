@@ -320,8 +320,8 @@ canvas {
   height: 100%;
   touch-action: none;
 }
-.stage.playing canvas {
-  cursor: none;
+.stage.playing.mouse-control canvas {
+  cursor: crosshair;
 }
 .welcome {
   position: absolute;
