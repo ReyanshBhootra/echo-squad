@@ -1,4 +1,4 @@
-const CACHE = "echo-squad-v6-after-hours";
+const CACHE = "echo-squad-v7-first-run";
 const FILES = [
   "./",
   "./index.html",
@@ -14,6 +14,7 @@ const FILES = [
   "./src/replay-viewer.js",
   "./src/app.js",
   "./src/controls.js",
+  "./src/coach.js",
   "./src/sim.js",
   "./src/neural.js",
   "./src/render.js",

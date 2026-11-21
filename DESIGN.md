@@ -1,4 +1,4 @@
-# Current direction — AFTER HOURS, build 0.4.0
+# Current direction — AFTER HOURS, build 0.5.0
 
 The user rejected the earlier restrained presentation as boring for a game and named GTA VI as a visual reference. Current direction: original coastal-night arcade identity, cream display type, near-black plum/asphalt, cyan player, hot-pink first echo/diamonds and warm-gold second echo/cores. Original SVG city, sunset, palms and car illustration is drawn in assets/after-hours.svg; no Rockstar imagery or logos are included. Official reference reviewed: https://www.rockstargames.com/VI . This is visual inspiration, not a claim of an open-world game or Rockstar affiliation.
 
@@ -7,6 +7,8 @@ The main arena is full-width; the playbook is below it. The lobby is a poster wi
 Effects quiet removes the added decorative motion and can be toggled from the pause screen. It is remembered locally; reduced-motion preferences override it. Gameplay movement remains necessary. Sounds remain opt-in. Cosmetic pickup streak never changes scoring, so recorded neural results/replays remain valid. The lab keeps paper panels for chart/table readability while sharing the darker outer frame.
 
 Uses the previously requested Emil guidance: functional input stays immediate; effects explain collection, coordination and pass changes; transform/opacity for UI motion; a slow button sheen runs only in attract mode. The original brief has been revised by direct player feedback. Verify subjective enjoyment through actual playtests before claiming the redesign is fun or competitive.
+
+First-run revision: an uncluttered mission strip sits outside the arena, with a progress bar tied directly to simulation ticks. A single static HOLD HERE marker guides the first real spark collection; it disappears after the pickup and never follows the mouse. Later missions teach line and triangle scoring. Results name actual link hits and cores, without inventing attribution to echoes or score multipliers.
 
 ## Earlier design history
 

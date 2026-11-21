@@ -5,6 +5,7 @@ import { draw } from "./render.js";
 import { loadScores, saveScore, download, localDate } from "./storage.js";
 import { renderLab } from "./lab.js";
 import { exportReplay, REPLAY_KEY } from "./replay.js";
+import { coachState, resultInsight } from "./coach.js";
 const $ = (id) => document.getElementById(id),
   canvas = $("game"),
   ctx = canvas.getContext("2d");
@@ -280,6 +281,7 @@ function finish() {
   $("pause").textContent = "Back to lobby";
   $("stage").classList.remove("playing");
   $("result-score").textContent = formatter.format(world.score);
+  $("result-insight").textContent = resultInsight(world);
   $("result-message").textContent = rival
     ? `Neural squad: ${formatter.format(rival.score)}. ${world.score > rival.score ? "You outplayed the model." : world.score === rival.score ? "A dead heat." : "The model takes this round."}`
     : "One player. Three teammates. Your squad is complete.";
@@ -298,6 +300,19 @@ function finish() {
   lastInput = Date.now();
 }
 function updateHud() {
+  const coach = coachState(world);
+  const coaching = ["playing", "paused"].includes(state);
+  $("run-coach").hidden = !coaching;
+  if (coaching) {
+    $("mission-copy").textContent = coach.mission;
+    $("echo-countdown").textContent = `${coach.countdown} ${coach.seconds}s`;
+    $("pass-progress").style.transform = `scaleX(${coach.progress})`;
+    $("pass-progress-track").setAttribute("aria-valuenow", String(world.tick));
+    $("pass-progress-track").setAttribute(
+      "aria-valuetext",
+      `${coach.seconds} seconds until ${world.phase < 2 ? "next echo" : "the finish"}`,
+    );
+  }
   $("chain-count").textContent =
     ["playing", "watching"].includes(state) && world.total - lastCollect <= 45
       ? String(chain).padStart(2, "0")
@@ -592,6 +607,10 @@ function frame(now) {
         time: now / 1000,
         hidePlayer: nativePointer,
         particles: effects ? particles : [],
+        guide:
+          state === "playing" && phaseHold <= 0
+            ? coachState(world).target
+            : null,
         preview: state === "idle",
         playerPosition:
           state === "playing" && phaseHold <= 0 && pointer.active
@@ -646,7 +665,7 @@ window.echoSquad = {
       position: { x: world.p.x, y: world.p.y },
       pointer: pointer.active ? { x: pointer.x, y: pointer.y } : null,
       rules: RULES,
-      build: "0.4.0-after-hours",
+      build: "0.5.0-first-run",
       nativePointer: $("stage").classList.contains("mouse-control"),
     };
   },

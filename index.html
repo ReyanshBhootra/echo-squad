@@ -71,6 +71,24 @@
                 <small>YOUR SCORE</small><strong id="score">00000</strong>
               </div>
             </div>
+            <div id="run-coach" class="run-coach" hidden>
+              <div class="mission-row">
+                <span id="mission-copy"
+                  >Move onto the marked spark. Hold briefly.</span
+                ><strong id="echo-countdown">ECHO 01 IN 20s</strong>
+              </div>
+              <div
+                id="pass-progress-track"
+                class="pass-progress-track"
+                role="progressbar"
+                aria-label="Current pass progress"
+                aria-valuemin="0"
+                aria-valuemax="600"
+                aria-valuenow="0"
+              >
+                <span id="pass-progress"></span>
+              </div>
+            </div>
             <div class="stage" id="stage">
               <canvas
                 id="game"
@@ -127,6 +145,7 @@
                 <div class="eyebrow">THREE OF YOU. ONE SCORE.</div>
                 <h2 id="result-score">0</h2>
                 <p id="result-message">Your squad is complete.</p>
+                <p id="result-insight"></p>
                 <div id="result-split" class="result-split"></div>
                 <form id="save-form">
                   <label for="player-name">Name for the local board</label>
@@ -259,7 +278,7 @@
     <footer class="site-footer">
       <span
         >ECHO SQUAD <span class="footer-divider">/</span> INDEPENDENT HACKATHON
-        BUILD 0.4.0</span
+        BUILD 0.5.0</span
       ><span id="offline-status">Checking offline readiness…</span
       ><a href="./README.md" target="_blank" rel="noopener">Build notes ↗</a>
     </footer>

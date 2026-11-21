@@ -1,4 +1,55 @@
 /* AFTER HOURS — original coastal-night art direction. */
+.run-coach {
+  background: #171d2e;
+}
+.mission-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  font-size: 14px;
+  color: #fff2dd;
+}
+.mission-row strong {
+  color: #7cecf4;
+  font:
+    12px ui-monospace,
+    monospace;
+  white-space: nowrap;
+}
+.pass-progress-track {
+  height: 3px;
+  background: #ffffff12;
+  overflow: hidden;
+}
+#pass-progress {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: #ff83ab;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.in-run .arena-panel {
+  width: min(calc(100vw - 32px), calc((100svh - 210px) * 1.7142857));
+}
+#result-insight {
+  max-width: 440px;
+  line-height: 1.5;
+}
+@media (max-width: 520px) {
+  .mission-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 15px;
+    font-size: 12px;
+  }
+  .mission-row strong {
+    font-size: 11px;
+  }
+}
 :root {
   --paper: #0b101c;
   --ink: #fff2dd;

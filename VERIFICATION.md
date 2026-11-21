@@ -1,3 +1,11 @@
+# First-run guidance and hosting build — November 21, 2026
+
+Build0.5.0 adds first-spark guidance, per-pass countdown/progress, scoring-shape instructions and result insights. Rules/model unchanged. All23 tests pass, including actual collection at the guided target, guide removal after scoring, countdown reset at the600-tick boundary, and distinction between pickup types and pass totals. App/coach/build syntax and whitespace checks passed. Static build copies32 allowlisted runtime assets into dist; no tests, IDE files or historical research snapshots are published as static files.
+
+Actual local-browser check: mission began Move onto the marked spark. Hold briefly with Echo01 in20s. Clicking the visible HOLD HERE spark scored10; mission changed to Keep collecting. Your route becomes Echo01, and countdown reached17s. Pause froze world tick497 with4s until echo. No formal human onboarding test or current latency benchmark is claimed. Deployment result is recorded in outputs/HANDOFF.md after publication.
+
+Earlier verification follows.
+
 # After Hours — November 21, 2026
 
 Build 0.4.0 is a presentation revision: original illustrated lobby, dark neon court, cached static floor, glowing targets/links, localized pickup effects, score feedback, pass reveals and cosmetic pickup streak. Simulation rules, training and model artifacts are unchanged. Quiet effects is available in both lobby and pause screen; local preference persistence was added after the browser run. Synthesized pickup chimes are opt-in; no listening test is claimed.

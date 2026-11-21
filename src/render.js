@@ -83,6 +83,7 @@ export function draw(
     playerLabel = "YOU",
     motion = false,
     time = 0,
+    guide = null,
   } = {},
 ) {
   const canvas = ctx.canvas,
@@ -232,6 +233,21 @@ export function draw(
       ctx.fillStyle = colors[2];
       ctx.fillRect(-2, -2, 4, 4);
     }
+    ctx.restore();
+  }
+  if (guide) {
+    ctx.save();
+    ctx.strokeStyle = "#fff3da";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(guide.x, guide.y, 18, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.font = "bold 12px monospace";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#0a1220";
+    ctx.fillRect(guide.x - 45, guide.y - 43, 90, 19);
+    ctx.fillStyle = "#fff3da";
+    ctx.fillText("HOLD HERE", guide.x, guide.y - 29);
     ctx.restore();
   }
   // The camera and pointer stay still; only feedback and link signals animate.
