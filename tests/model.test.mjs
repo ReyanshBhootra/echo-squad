@@ -31,9 +31,10 @@ test("training, validation and final test layouts are disjoint", () => {
 test("saved neural evaluation reproduces exactly on a held-out layout", () => {
   const row = evaluation.find(
     (r) =>
-      r.seed === 9000 && r.controller === `neural-${manifest.selectedSeed}`,
+      r.seed === manifest.testSeeds[0] &&
+      r.controller === `neural-${manifest.selectedSeed}`,
   );
-  const result = runPolicy((s) => predict(model, s), 9000);
+  const result = runPolicy((s) => predict(model, s), manifest.testSeeds[0]);
   assert.equal(result.score, row.score);
   assert.deepEqual(result.byKind, [row.spark, row.link, row.core]);
 });

@@ -4,6 +4,7 @@ import {
   createWorld,
   step,
   expert,
+  expertChoice,
   observe,
   random,
   runPolicy,
@@ -19,16 +20,16 @@ import {
 const started = performance.now();
 await mkdir("models", { recursive: true });
 await mkdir("research", { recursive: true });
-const trainSeeds = Array.from({ length: 64 }, (_, i) => 1000 + i);
-const validationSeeds = Array.from({ length: 8 }, (_, i) => 3000 + i);
-const testSeeds = Array.from({ length: 24 }, (_, i) => 9000 + i);
+const trainSeeds = Array.from({ length: 64 }, (_, i) => 21000 + i);
+const validationSeeds = Array.from({ length: 8 }, (_, i) => 23000 + i);
+const testSeeds = Array.from({ length: 24 }, (_, i) => 29000 + i);
 const rows = [],
   rng = random(8128);
 for (const seed of trainSeeds) {
   const s = createWorld(seed);
   while (!s.done) {
     const a = expert(s);
-    if (s.total % 4 === 0) rows.push({ x: observe(s), y: a });
+    if (s.total % 4 === 0) rows.push({ x: observe(s), y: expertChoice(s) });
     step(s, rng() < 0.16 ? [(rng() - 0.5) * 2, (rng() - 0.5) * 2] : a);
   }
 }
@@ -36,7 +37,8 @@ const validation = [];
 for (const seed of validationSeeds) {
   const s = createWorld(seed);
   while (!s.done) {
-    if (s.total % 8 === 0) validation.push({ x: observe(s), y: expert(s) });
+    if (s.total % 8 === 0)
+      validation.push({ x: observe(s), y: expertChoice(s) });
     step(s, expert(s));
   }
 }
@@ -141,9 +143,12 @@ const summary = [...new Set(evaluations.map((r) => r.controller))].map(
 );
 const manifest = {
   schema: 1,
+  experiment: 3,
+  control:
+    "Absolute pointer positions; no acceleration or inertia; two-tick stable target contact.",
   rules: RULES,
   algorithm:
-    "Supervised behavior cloning of a teammate-aware scripted controller; SGD, tanh MLP, squared error. Not reinforcement learning.",
+    "Supervised imitation of scripted target selection (spark versus link); SGD, tanh MLP, squared error. Engine executes absolute target positions. Not reinforcement learning.",
   architecture: selected.model.architecture,
   parameters: parameterCount(selected.model),
   selectedSeed: selected.initSeed,
@@ -163,7 +168,7 @@ const manifest = {
   limitations: [
     "Synthetic trajectories from scripted teacher, no human training examples.",
     "Input-masking is a sensitivity check, not a separately retrained ablation.",
-    "Teacher engineered observation includes a heuristic link endpoint; this is not learning perception or planning from pixels.",
+    "Engine supplies nearest-spark and heuristic link candidates; the network learns which candidate to select, not movement or perception from pixels.",
     "Three initializations are exploratory evidence, not a large statistical study.",
     "No inference about human enjoyment or esports skill.",
   ],

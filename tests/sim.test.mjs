@@ -10,6 +10,7 @@ import {
   observe,
   W,
   H,
+  pointAction,
 } from "../src/sim.js";
 import {
   makeModel,
@@ -33,21 +34,23 @@ test("recorded teammate is at the exact earlier tick", () => {
   assert.deepEqual(s.ghosts[0], first);
   assert.equal(s.record.length, 1);
 });
-test("speed limits and boundaries survive adversarial inputs", () => {
+test("absolute target bounds survive adversarial inputs", () => {
   const s = createWorld();
   for (let i = 0; i < 1800; i++) {
     step(s, [1e9, -1e9]);
     assert.ok(s.p.x >= 14 && s.p.x <= W - 14);
     assert.ok(s.p.y >= 14 && s.p.y <= H - 14);
-    assert.ok(Math.hypot(s.p.vx, s.p.vy) <= 275 + 0.0001);
+    assert.ok(Number.isFinite(s.p.vx) && Number.isFinite(s.p.vy));
   }
 });
 test("each item scores once per wave", () => {
   const s = createWorld();
   s.items = [{ x: s.p.x, y: s.p.y, kind: 0, active: true }];
-  step(s, [0, 0]);
+  step(s, pointAction(s.p));
+  assert.equal(s.score, 0);
+  step(s, pointAction(s.p));
   assert.equal(s.score, 10);
-  step(s, [0, 0]);
+  step(s, pointAction(s.p));
   assert.equal(s.score, 10);
 });
 test("geometry handles degenerate links and triangles", () => {

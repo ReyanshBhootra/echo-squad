@@ -1,46 +1,44 @@
-# Experiment 001 — Can a small controller imitate teamwork?
+# Experiment 003 — Direct controls and stable target selection
 
-## Actual method
+## Trigger: real player feedback
 
-Behavior cloning: a 610-parameter multilayer perceptron predicts two movement components from 16 engineered observations. A scripted controller supplies training labels. Tanh hidden/output units, squared-error loss, explicit SGD backpropagation; no ML framework or pretrained model. No reinforcement learning, insect connectome or human training dataset is involved.
+The first player reported that the drone stayed behind the mouse, felt annoying, and caused dizziness. The original velocity controller deliberately capped speed and added acceleration. That was the wrong default for this mouse-driven game.
 
-The observation includes own position/velocity, relative nearest-spark position, a heuristic link endpoint, replay teammate position and short lookahead, phase, time and availability flags. Engineering that endpoint gives the learner substantial task information. Do not describe this as end-to-end learning from pixels.
+The new player marker uses the latest absolute pointer position on every rendered frame. There is no acceleration, smoothing, pursuit or residual momentum. The simulation samples those positions at 30 Hz for scoring and deterministic replay. Ghosts interpolate recorded samples for rendering. No spinning markers, trailing paths or separate opponent cursor are shown. The camera stays fixed.
 
-Standard objective: L(theta) = mean ||pi_theta(observation) - teacher_action||² / 2. The code differentiates tanh using 1 - tanh(z)² and updates each weight by learning_rate × its gradient. This is established mathematics, not an original algorithm.
+## A genuine intermediate failure
 
-## Splits and selection
+An initial direct-control trial (archived in experiment-002) used swept collection. Random rapid sweeps averaged 7692.917 points, outperforming the scripted teamwork pilot's 7342.292. That exposed a scoring loophole. It was a project-specific engineering finding, not a novel scientific result.
 
-64 training layouts (1000–1063), 1,800 environment steps each, one example every four steps: 28,800 examples. Exploratory movement perturbs some expert actions to broaden visited states. Eight separate validation layouts (3000–3007), and 24 final test layouts (9000–9023). Three initialization seeds: 42, 43, 44. Twelve epochs, with checkpoints evaluated every two epochs. Select the checkpoint/run with highest validation game score, then report all runs on the test set. Epoch zero is an untrained baseline.
+Current rules require contact in two consecutive simulation samples (about 33–67 ms depending on input timing). The controlled marker still responds immediately. A target visibly brightens during the first contact sample before collection. This contact check applies to all controllers and replay teammates. Rule version: echo-0.2-precision. Old scores remain stored separately and do not enter this board.
 
-The example count, environment-step count and completed-episode count are different. Twelve epochs reuse the same examples. This first run generated 115,200 training-environment steps, not 115,200 games.
+## Current learning task
 
-## First observed results
+The 610-parameter tanh network chooses between two engine-supplied candidates: the nearest blue spark and a heuristic link endpoint. The engine moves directly to its selected candidate. It does not learn raw pointer movement, discover targets from pixels or learn the whole game from scratch. The untrained network already has that engineered planner.
 
-The selected checkpoint was seed 44, epoch 12. On the 24 held-out layouts:
+The teacher labels are spark preference [1,-1] or link preference [-1,1]. Loss is mean squared preference error; optimization is explicit SGD/backpropagation. This is supervised imitation, not reinforcement learning. Masking team information also removes the link candidate, so the masking test includes a change to available actions; it does not isolate a causal neural mechanism.
 
-| Controller | Mean score | Sample standard deviation |
-|---|---:|---:|
-| Random movement | 779.6 | 268.0 |
-| Untrained seed-42 network | 211.7 | 84.8 |
-| Selected trained network | 3533.1 | 518.2 |
-| Greedy collector | 3952.9 | 364.6 |
-| Scripted teamwork teacher | 4431.7 | 375.9 |
-| Selected network with team inputs masked | 3808.5 | 390.9 |
+## Data and selection
 
-Training improved the initial controllers, but this network does not outperform the simple greedy controller. Masking teammate information improved the selected model's mean score. We therefore do not have evidence that it learned useful cooperation. Masking at inference is an out-of-distribution sensitivity test, not a causal proof or a separately retrained no-team ablation.
+64 synthetic training episodes, 28,800 sampled observations, 115,200 generated environment steps, 12 epochs reusing the data, 3 weight initializations. New training seeds: 21000–21063. Validation: 23000–23007. Final evaluation: 29000–29023. These do not overlap the previous experiment's layouts. Selection used validation scores only: seed 43, epoch 4.
 
-Other initializations achieved different test outcomes. We keep the validation-selected model even though seed 42 scored higher on the test set, avoiding selection on held-out results. See evaluation.csv for each layout and each controller. Shared layouts make paired comparisons possible; variation across layouts is distinct from variation across training seeds. The table's standard deviations describe layout variation, not confidence intervals.
+## Actual results
 
-## Reproduce
+| Controller | Mean score | Sample SD | Test layouts |
+|---|---:|---:|---:|
+| Random movement | 1868.958 | 281.595 | 24 |
+| Untrained target selector | 5420.208 | 413.502 | 24 |
+| Selected neural selector | 5917.292 | 431.378 | 24 |
+| Greedy collector | 5592.917 | 288.429 | 24 |
+| Scripted teamwork | 5722.708 | 537.820 | 24 |
+| Neural / team inputs masked | 5592.917 | 288.429 | 24 |
 
-From the project folder, run `node scripts/train.mjs`. It regenerates weights, raw CSV/JSON logs and the run manifest. Timing depends on hardware. `node --test tests/*.test.mjs` verifies deterministic replay, movement limits, scoring, geometry and a backpropagation sanity check. The exact simulator is imported by both browser and trainer.
+The selected learned selector scored higher on average than the greedy and scripted teamwork controllers on these layouts. That is an exploratory result from three initializations, not proof of general superiority or human enjoyment. Variability across layouts is separate from variability across training runs. The large untrained baseline makes clear how much capability comes from the engineered planner.
 
-## Limits and next experiment
+The random-controller score from the swept trial is not directly comparable as a model improvement: the scoring rules changed. Its decline under current rules documents the intended effect of the contact requirement. All current controller comparisons use identical rules and seeds.
 
-No human usability testing has happened. Model-free simulations cannot establish enjoyment. This experiment has three initializations and a narrow layout distribution. The link-target feature is hand-engineered. Supervised validation loss need not track closed-loop game performance, and the present evidence suggests imitation/generalization limitations.
+## Reproduce and inspect
 
-Next: examine failure trajectories and evaluate a revised controller on a new, untouched final test set if the current test results are used to guide development. Do not repeatedly tune to this test set and continue calling it untouched.
+Run npm run train, npm test and python scripts/audit_results.py. The same simulator is used in the browser. Optional plots: python scripts/plot.py with the pinned plotting requirement. Model checksum, individual layout rows, all initialization results and validation curves are included. Historical experiment-001 is reproducible from Git commit 9d0115e. Intermediate experiment-002 includes simulator, neural and trainer source snapshots.
 
-## Development record
-
-These are digital notes written during implementation, not handwritten lab notes or a retroactive claim of manual research. The trained model and actual limitations are part of the playable training lab. Keep this document synchronized with any future experiment; do not silently overwrite historical results.
+No structured first-time player study, physical booth test or scientific novelty claim. This experiment responds to one real player's control complaint; whether the revision feels good still requires that player's retest.

@@ -1,4 +1,13 @@
-import { createWorld, step, expert, DT, W, H, RULES, clamp } from "./sim.js";
+import {
+  createWorld,
+  step,
+  DT,
+  W,
+  H,
+  RULES,
+  pointAction,
+} from "./sim.js";
+import { pointerPosition, keyboardAction } from "./controls.js";
 import { predict, makeModel } from "./neural.js";
 import { draw } from "./render.js";
 import { loadScores, saveScore, download, localDate } from "./storage.js";
@@ -199,7 +208,7 @@ function reset() {
     $(id).hidden = true;
   $("welcome").hidden = false;
   $("demo-label").hidden = false;
-  $("demo-label").textContent = "LIVE SIMULATION / SCRIPTED DEMO";
+  $("demo-label").textContent = "ARENA PREVIEW / YOUR ROUTES BECOME TEAMMATES";
   $("pause").disabled = true;
   $("pause").textContent = "Pause ESC";
   $("stage").classList.remove("playing");
@@ -259,7 +268,7 @@ function updateHud() {
     state === "idle"
       ? "Move to collect. Come back stronger."
       : [
-          "Collect blue sparks. Your route is recording.",
+          "Touch blue sparks. Pause briefly to collect.",
           "Sweep orange diamonds with your link.",
           "Surround gold cores with your squad.",
         ][Math.min(world.phase, 2)];
@@ -275,20 +284,13 @@ function input() {
   if (x || y) {
     lastInput = Date.now();
     pointer.active = false;
-    return [x, y];
+    return keyboardAction(world.p, x, y);
   }
-  if (!pointer.active) return [0, 0];
-  return [
-    clamp((pointer.x - world.p.x) / 35, -1, 1),
-    clamp((pointer.y - world.p.y) / 35, -1, 1),
-  ];
+  return pointAction(pointer.active ? pointer : world.p);
 }
 function steer(e) {
-  const r = canvas.getBoundingClientRect(),
-    scale = Math.min(r.width / W, r.height / H);
   pointer = {
-    x: clamp((e.clientX - r.left - (r.width - W * scale) / 2) / scale, 0, W),
-    y: clamp((e.clientY - r.top - (r.height - H * scale) / 2) / scale, 0, H),
+    ...pointerPosition(e.clientX, e.clientY, canvas.getBoundingClientRect()),
     active: true,
   };
   lastInput = Date.now();
@@ -466,10 +468,6 @@ function frame(now) {
     } else
       while (accumulator >= DT) {
         accumulator -= DT;
-        if (state === "idle") {
-          step(world, expert(world));
-          if (world.done) world = createWorld(9019);
-        }
         if (state === "watching") {
           step(world, safePrediction(demoModel, world));
           if (world.done) {
@@ -502,7 +500,6 @@ function frame(now) {
                 ? "Sweep orange diamonds with the line between you."
                 : "Surround gold cores with the triangle you create together.";
             motion($("transition"));
-            pointer.active = false;
             accumulator = 0;
             break;
           }
@@ -513,10 +510,16 @@ function frame(now) {
       .filter((p) => p.age < 0.65);
     if (!reduced.matches || state !== "idle" || now % 500 < 30)
       draw(ctx, world, {
-        time: now,
-        reduced: reduced.matches,
-        rival,
         particles,
+        preview: state === "idle",
+        playerPosition:
+          state === "playing" && phaseHold <= 0 && pointer.active
+            ? pointer
+            : null,
+        ghostFraction:
+          ["playing", "idle", "watching"].includes(state) && !world.done
+            ? accumulator / DT
+            : 0,
       });
     updateHud();
   } else accumulator = 0;
@@ -559,6 +562,9 @@ window.echoSquad = {
       total: world.total,
       mode,
       modelLoaded: !!model,
+      position: { x: world.p.x, y: world.p.y },
+      pointer: pointer.active ? { x: pointer.x, y: pointer.y } : null,
+      rules: RULES,
     };
   },
 };

@@ -3,7 +3,12 @@ const colors = ["#8dd7ff", "#ff916d", "#ead080"];
 export function draw(
   ctx,
   s,
-  { time = 0, reduced = false, rival = null, particles = [] } = {},
+  {
+    particles = [],
+    playerPosition = null,
+    ghostFraction = 0,
+    preview = false,
+  } = {},
 ) {
   const canvas = ctx.canvas,
     dpr = Math.min(devicePixelRatio || 1, 2),
@@ -52,7 +57,24 @@ export function draw(
     ctx.lineTo(x, y + dy * 20);
     ctx.stroke();
   }
-  const drones = [s.p, ...s.ghosts];
+  const ghosts = preview
+    ? [
+        { x: 760, y: 160 },
+        { x: 820, y: 440 },
+      ]
+    : s.ghosts.map((ghost, i) => {
+        const next =
+          s.tracks[i][Math.min(s.tick, s.tracks[i].length - 1)] || ghost;
+        const fraction = Math.max(0, Math.min(1, ghostFraction));
+        return {
+          x: ghost.x + (next.x - ghost.x) * fraction,
+          y: ghost.y + (next.y - ghost.y) * fraction,
+        };
+      });
+  const drones = [
+    preview ? { x: 660, y: 300 } : playerPosition || s.p,
+    ...ghosts,
+  ];
   if (drones.length === 3) {
     ctx.fillStyle = "#ebc9740c";
     ctx.beginPath();
@@ -72,13 +94,20 @@ export function draw(
       ctx.stroke();
     }
   for (const item of s.items) {
-    if (!item.active || item.kind > s.phase) continue;
+    if (!item.active || item.kind > (preview ? 2 : s.phase)) continue;
     const { x, y, kind } = item;
     ctx.save();
     ctx.translate(x, y);
     ctx.fillStyle = colors[kind];
     ctx.strokeStyle = colors[kind];
     ctx.lineWidth = 1.5;
+    if (item.contact > 0) {
+      ctx.strokeStyle = "#ffffffa0";
+      ctx.beginPath();
+      ctx.arc(0, 0, kind === 0 ? 10 : kind === 1 ? 12 : 16, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = colors[kind];
+    }
     if (kind === 0) {
       ctx.beginPath();
       ctx.moveTo(0, -6);
@@ -113,47 +142,7 @@ export function draw(
     }
     ctx.restore();
   }
-  for (let g = 0; g < s.tracks.length; g++) {
-    const track = s.tracks[g];
-    ctx.strokeStyle = colors[g + 1] + "24";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (
-      let i = Math.max(0, s.tick - 48);
-      i < Math.min(s.tick, track.length);
-      i++
-    ) {
-      const p = track[i];
-      i === Math.max(0, s.tick - 48)
-        ? ctx.moveTo(p.x, p.y)
-        : ctx.lineTo(p.x, p.y);
-    }
-    ctx.stroke();
-  }
-  if (!reduced && s.record.length > 2) {
-    ctx.strokeStyle = "#8dd7ff45";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let i = Math.max(0, s.record.length - 25); i < s.record.length; i++) {
-      const p = s.record[i];
-      i === Math.max(0, s.record.length - 25)
-        ? ctx.moveTo(p.x, p.y)
-        : ctx.lineTo(p.x, p.y);
-    }
-    ctx.stroke();
-  }
-  if (rival) {
-    ctx.strokeStyle = "#ee775544";
-    ctx.setLineDash([4, 5]);
-    ctx.beginPath();
-    ctx.arc(rival.p.x, rival.p.y, 19, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#e88d6c66";
-    ctx.font = "8px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("NN", rival.p.x, rival.p.y - 25);
-  }
+  // Keep the arena still: no motion trails, auto-spinning echoes or rival cursor.
   drones.forEach((p, i) => {
     const c = colors[i];
     ctx.save();
@@ -163,9 +152,7 @@ export function draw(
     ctx.beginPath();
     ctx.arc(0, 0, 21, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.rotate(
-      i === 0 ? Math.atan2(s.p.vy, s.p.vx) + Math.PI / 2 : time * 0.0001,
-    );
+    // A fixed marker avoids rotation flicker when the pointer changes direction.
     ctx.fillStyle = c;
     ctx.beginPath();
     ctx.moveTo(0, -12);
@@ -185,7 +172,7 @@ export function draw(
     ctx.fillStyle = colors[p.kind];
     ctx.font = "11px monospace";
     ctx.textAlign = "center";
-    ctx.fillText("+" + p.points, p.x, p.y - (reduced ? 0 : p.age * 30));
+    ctx.fillText("+" + p.points, p.x, p.y - 12);
   }
   ctx.globalAlpha = 1;
 }

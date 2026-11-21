@@ -13,3 +13,5 @@ Observed work:
 The independent audit recalculates means and sample standard deviations from CSV in Python, rather than relying on JavaScript's exported summaries. Screenshot: research/jetbrains-audit.jpg. Portable project configuration is in .idea; transient workspace state is git-ignored.
 
 Scope: most implementation and all neural training so far were done with Codex and command-line tools. The graphs were generated with a separate Python environment and Matplotlib, outside PyCharm. We have not used Junie, Air, PyCharm JavaScript inspections or IDE model training, and do not claim otherwise. This initial IDE use should be expanded through meaningful debugging/testing during further development; eligibility and prize selection remain the organizers' decision.
+
+The recorded screenshot and IDE audit above belong to experiment 001. Experiment 003 and the direct-control revision were built and audited through command-line tools; this file does not claim a new PyCharm run.

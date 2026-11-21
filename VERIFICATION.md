@@ -1,31 +1,24 @@
-# Verified local checkpoint — November 19, 2026
+# Verified direct-control revision — November 19, 2026
 
-## Automated checks
+## Player feedback addressed
 
-Ten Node tests passed: deterministic simulation and replay, exact teammate timing, adversarial movement bounds, single-collection scoring, geometric edge cases, action-independent seeded layouts, backpropagation sanity, model checksum, disjoint data splits and one independently reproduced held-out model evaluation. JavaScript syntax checks also passed before final formatting.
+The player reported mouse/drone lag, dizziness and annoyance. Removed acceleration, speed-limited mouse pursuit, residual momentum, motion trails, auto-spinning echoes and the second moving rival cursor. The player is rendered at the latest pointer coordinate on every animation frame. Scores and ghost recordings use those same absolute coordinates on fixed simulation ticks. Keyboard motion stops immediately on release.
 
-PyCharm ran scripts/audit_results.py with Python 3.12: exit code 0. It independently recomputed every exported aggregate from all 192 evaluation rows and verified the model SHA-256 and data splits. Actual screenshot is in research/jetbrains-audit.jpg.
+## Current automated checks
 
-## Browser observations
+15 Node tests passed: five new direct-control/contact/mapping/replay checks and ten simulator/model checks. The tests assert exact next-tick pointer arrival, no drift, correct coordinates in scaled and letterboxed arenas, rejection of random sweep pickups, replayed direct positions, rule/model compatibility and exact held-out evaluation reproduction. The standard-library Python audit also passed for all 192 current rows/eight summaries, checksum and nonoverlapping data splits.
 
-Tool-driven Chrome checks, not human playtests:
+## Current browser observations
 
-- Completed a real-time 1,800-step neural challenge through phases 0, 1, 2 and ending phase 3. Approximately 64.1 seconds including transition explanations. The procedural pointer driver scored 2,740; the neural rival scored 3,950 on arena seed 9019.
-- No JavaScript exceptions in that run. Saved the score through the result form, verified the stored record and spectator update, then removed only the generated QA row.
-- A callsign containing literal HTML was displayed as text, with no injected element.
-- Held-out layout 9000 produced exactly 3,415 neural points in both Node and Chrome.
-- Training lab rendered the actual logs, selected model and all baseline summaries; both trained and untrained checkpoint demonstrations were exercised.
-- Spectator page reported the arena connected and received the local score and board.
-- Escape paused the simulation; its step count remained unchanged while paused.
-- Desktop focus mode fit the arena inside the viewport. A 390 × 844 emulated touch viewport had no horizontal overflow and kept the arena on screen. This is not a physical mobile-device usability test.
-- Focus mode makes background controls inert and restores them on return to lobby.
-- Stopped the actual development server, reloaded the page, fetched the model and rendered the lab chart successfully. An uncached request returned the service worker's 503 response while the cached model returned 200, verifying cached operation rather than relying on network emulation. Restarted the server afterward.
-- The latest service-worker cache, echo-squad-v2, installed after adding downloadable figures.
+Three requested positions were checked after pointer events: (760,110), (140,430), (640,240). On the very next animation frame, the actual canvas pixel at each requested coordinate was [141,215,255,255], the blue player marker. Subsequent simulation positions matched within floating-point error below 3e-14 units. Canvas cursor was 'none', removing the duplicate visible pointer. Current rule version and compatible model both loaded successfully.
 
-## Not yet established
+The first contact sample now shows a static target ring; collection requires two consecutive contact samples. This changes scoring, not motion responsiveness. Camera position is fixed. Previous results and browser evidence are archived under research/experiment-001 and apply to the previous controls only.
 
-No real first-time player observations, voluntary replay measurements, physical booth test, two-hour endurance soak, accessibility audit, public deployment, registration or submission. The selected neural model remains below the greedy baseline and has not demonstrated useful learned cooperation. Do not describe this checkpoint as a validated winning entry.
+## Research honesty
 
-## Reproduce core checks
+Current experiment 003 trains target preference between engine-supplied spark/link candidates. It is supervised imitation. The selected neural selector averaged 5917.292 points, greedy 5592.917, scripted teamwork 5722.708 on 24 newly held-out layouts. Random motion averaged 1868.958. These are exploratory bot results, not human enjoyment measurements. The intermediate swept-scoring failure is archived in experiment-002.
 
-Run npm test and python scripts/audit_results.py from the project folder. Run npm start and use the documented player flow for browser checks. Optional figure reproduction uses Python/Matplotlib as described in scripts/plot.py. Browser QA actions above were performed through tooling; there is no committed Playwright runner yet.
+The PyCharm screenshot documents the earlier experiment's audit, not a new IDE run of experiment 003. Current checks were run through command-line tools. No public deployment or submission yet. The player still needs to retest the control feel; one report is not a structured usability study.
+
+
+A full tool-driven browser run completed all 1,800 steps and all three passes under echo-0.2-precision. The pointer driver scored 2,930; no JavaScript exceptions were recorded. Its wall time included background-tab throttling and is not a performance benchmark. The lobby preview is now static rather than a rapid scripted animation. The neural experiment/model was not changed by these presentation-only refinements.

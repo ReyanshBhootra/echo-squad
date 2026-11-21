@@ -1,4 +1,4 @@
-const CACHE = "echo-squad-v2";
+const CACHE = "echo-squad-v3-direct";
 const FILES = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const FILES = [
   "./icon.svg",
   "./spectator.html",
   "./src/app.js",
+  "./src/controls.js",
   "./src/sim.js",
   "./src/neural.js",
   "./src/render.js",

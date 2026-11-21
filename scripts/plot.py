@@ -20,7 +20,7 @@ plt.rcParams.update({
     "axes.spines.top": False, "axes.spines.right": False,
     "axes.facecolor": "#f2f0e9", "figure.facecolor": "#f2f0e9",
     "axes.labelcolor": "#263239", "text.color": "#263239",
-    "svg.hashsalt": "echo-experiment-001",
+    "svg.hashsalt": f"echo-experiment-{manifest.get('experiment',1)}",
 })
 
 fig, ax = plt.subplots(figsize=(8, 4.8), layout="constrained")
@@ -30,7 +30,7 @@ for seed, color in zip((42, 43, 44), ("#df623e", "#347fa1", "#80714d")):
             marker="o", markersize=4, color=color, label=f"Initialization {seed}")
 ax.set(title="Learning to imitate a teammate-aware pilot",
        xlabel="Training epoch (same examples reused)",
-       ylabel="Mean game score on 8 validation layouts", ylim=(0, 4200))
+       ylabel="Mean game score on 8 validation layouts", ylim=(0, max(r["validationScore"] for r in learning)*1.15))
 ax.grid(axis="y", alpha=.2)
 ax.legend(frameon=False, loc="lower right")
 fig.text(.01, -.025, "Three independent runs. Validation scores used for checkpoint selection; these are not final test scores.", fontsize=8)
@@ -46,8 +46,8 @@ ax.barh(labels, [r["mean"] for r in rows], xerr=[r["sd"] for r in rows],
         color=["#a1aaa8", "#a1aaa8", "#df623e", "#347fa1", "#347fa1", "#80714d"],
         error_kw={"elinewidth": 1.2, "capsize": 3}, height=.6)
 ax.invert_yaxis()
-ax.set(title="The simple strategies still score higher",
-       xlabel="Game score on 24 held-out layouts (mean ± sample SD)", xlim=(0, 5300))
+ax.set(title="Controller performance under direct controls",
+       xlabel="Game score on 24 held-out layouts (mean ± sample SD)", xlim=(0, max(r["mean"]+r["sd"] for r in rows)*1.1))
 ax.grid(axis="x", alpha=.15)
 fig.text(.01, -.025, "Error bars show variation across layouts, not confidence intervals. Input masking is a sensitivity check.", fontsize=8)
 for ext in ("svg", "png", "pdf"):

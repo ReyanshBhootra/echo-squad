@@ -1,0 +1,3 @@
+# Experiment 002: immediate pointer control, first scoring attempt
+
+Actual intermediate run during the control fix. The absolute-coordinate imitation network averaged 1615.208 points on 24 new test layouts. Random rapid sweeps scored 7692.917, ahead of the scripted teamwork controller at 7342.292. Swept collection therefore exposed a scoring loophole: indiscriminate movement could dominate deliberate positioning. These results motivated short, stable target contact and a discrete target-selection policy. This run is archived rather than presented as the current game. Models, raw logs and the exact simulator/neural/training source snapshots are retained here.

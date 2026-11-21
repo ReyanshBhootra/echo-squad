@@ -321,7 +321,7 @@ canvas {
   touch-action: none;
 }
 .stage.playing canvas {
-  cursor: crosshair;
+  cursor: none;
 }
 .welcome {
   position: absolute;

@@ -1,5 +1,5 @@
 import { RULES } from "./sim.js";
-const KEY = "echo-squad-scores-v1";
+const KEY = "echo-squad-scores-" + RULES;
 export function loadScores() {
   try {
     const rows = JSON.parse(localStorage.getItem(KEY) || "[]");

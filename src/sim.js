@@ -1,10 +1,25 @@
 // The browser and training runner import this exact simulation.
-export const RULES = "echo-0.1";
+export const RULES = "echo-0.2-precision";
 export const W = 960,
   H = 560,
   DT = 1 / 30,
   PASS_STEPS = 600;
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+// Absolute actions are shared by humans, scripted pilots and the neural policy.
+// No chasing, acceleration or momentum is applied to pointer positions.
+export const pointAction = (p) => [(p.x / W) * 2 - 1, (p.y / H) * 2 - 1];
+export const actionPoint = (a) => ({
+  x: clamp(
+    ((clamp(Number.isFinite(a[0]) ? a[0] : 0, -1, 1) + 1) / 2) * W,
+    14,
+    W - 14,
+  ),
+  y: clamp(
+    ((clamp(Number.isFinite(a[1]) ? a[1] : 0, -1, 1) + 1) / 2) * H,
+    14,
+    H - 14,
+  ),
+});
 export function random(seed) {
   let a = seed >>> 0;
   return () => {
@@ -21,10 +36,10 @@ export function segmentDistance(p, a, b) {
   const t = l ? clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / l, 0, 1) : 0;
   return Math.hypot(p.x - a.x - t * dx, p.y - a.y - t * dy);
 }
-export function inTriangle(p, a, b, c) {
+export function inTriangle(p, a, b, c, minimumArea = 1800) {
   const cross = (q, r, s) =>
     (r.x - q.x) * (s.y - q.y) - (r.y - q.y) * (s.x - q.x);
-  if (Math.abs(cross(a, b, c)) < 1800) return false;
+  if (Math.abs(cross(a, b, c)) < minimumArea) return false;
   const x = cross(a, b, p),
     y = cross(b, c, p),
     z = cross(c, a, p);
@@ -67,14 +82,11 @@ export function step(s, action) {
   if (s.done) return s;
   s.events = [];
   const p = s.p,
-    length = Math.hypot(action[0], action[1]);
-  const ax = clamp(action[0] / Math.max(1, length), -1, 1),
-    ay = clamp(action[1] / Math.max(1, length), -1, 1);
-  const approach = (v, target) => v + clamp(target - v, -1100 * DT, 1100 * DT);
-  p.vx = approach(p.vx, ax * 275);
-  p.vy = approach(p.vy, ay * 275);
-  p.x = clamp(p.x + p.vx * DT, 14, W - 14);
-  p.y = clamp(p.y + p.vy * DT, 14, H - 14);
+    next = actionPoint(action);
+  p.vx = (next.x - p.x) / DT;
+  p.vy = (next.y - p.y) / DT;
+  p.x = next.x;
+  p.y = next.y;
   s.ghosts = s.tracks.map((t) => t[s.tick]);
   s.record.push({ x: p.x, y: p.y });
   const drones = [p, ...s.ghosts];
@@ -95,7 +107,8 @@ export function step(s, action) {
         }
     if (item.kind === 2 && drones.length === 3)
       hit = inTriangle(item, ...drones);
-    if (hit) {
+    item.contact = hit ? (item.contact || 0) + 1 : 0;
+    if (item.contact >= 2) {
       const points = [10, 35, 90][item.kind];
       item.active = false;
       s.score += points;
@@ -149,15 +162,15 @@ export function targets(s) {
       }
   return { spark, link, best, cost };
 }
+export function expertChoice(s) {
+  const t = targets(s);
+  return t.link && t.cost < t.best ? [-1, 1] : [1, -1];
+}
 export function expert(s, cooperate = true) {
-  const t = targets(s),
-    p = s.p;
-  const target = cooperate && t.link && t.cost < t.best ? t.link : t.spark;
-  if (!target) return [0, 0];
-  const dx = target.x - p.x,
-    dy = target.y - p.y,
-    d = Math.hypot(dx, dy);
-  return [dx / Math.max(25, d), dy / Math.max(25, d)];
+  const t = targets(s);
+  return pointAction(
+    cooperate && t.link && t.cost < t.best ? t.link : t.spark || s.p,
+  );
 }
 export function observe(s, hideTeam = false) {
   const t = targets(s),
@@ -168,8 +181,8 @@ export function observe(s, hideTeam = false) {
   return [
     (p.x / W) * 2 - 1,
     (p.y / H) * 2 - 1,
-    p.vx / 275,
-    p.vy / 275,
+    (p.vx * DT) / W,
+    (p.vy * DT) / H,
     ...rel(t.spark),
     ...rel(!hideTeam && t.link),
     ...rel(g),

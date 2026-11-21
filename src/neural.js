@@ -1,4 +1,4 @@
-import { random, observe } from "./sim.js";
+import { random, observe, targets, pointAction } from "./sim.js";
 export const INPUTS = 16,
   HIDDEN = 32,
   OUTPUTS = 2;
@@ -8,7 +8,7 @@ export function makeModel(seed = 42) {
       Array.from({ length: n }, () => (rng() * 2 - 1) * scale);
   return {
     architecture: [INPUTS, HIDDEN, OUTPUTS],
-    method: "behavior-cloning",
+    method: "behavior-cloning-target-selection",
     w1: init(INPUTS * HIDDEN, 0.3),
     b1: Array(HIDDEN).fill(0),
     w2: init(HIDDEN * OUTPUTS, 0.15),
@@ -30,8 +30,15 @@ export function forward(m, x) {
   }
   return { h, y };
 }
-export const predict = (m, s, hideTeam = false) =>
-  forward(m, observe(s, hideTeam)).y;
+export function predict(m, s, hideTeam = false) {
+  const values = forward(m, observe(s, hideTeam)).y;
+  const candidates = targets(s);
+  const target =
+    !hideTeam && candidates.link && values[1] > values[0]
+      ? candidates.link
+      : candidates.spark;
+  return pointAction(target || s.p);
+}
 export const parameterCount = (m) =>
   m.w1.length + m.b1.length + m.w2.length + m.b2.length;
 // Plain SGD backpropagation; all training math is inspectable and reproducible.
