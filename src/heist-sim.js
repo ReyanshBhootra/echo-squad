@@ -1,5 +1,7 @@
 // Echo Heist has its own rules. Classic experiment weights do not control it.
-export const HEIST_RULES = "echo-heist-1";
+export const HEIST_RULES = "echo-heist-2";
+export const LEGACY_HEIST_RULES = "echo-heist-1";
+export const LOOT_RESPAWN_TICKS = 6 * 60;
 export const HZ = 60,
   HSTEP = 1 / HZ,
   PASS_TICKS = 25 * HZ,
@@ -39,16 +41,50 @@ export function blocked(p) {
       Math.abs(p.z - b.z) < b.d / 2 + 0.42,
   );
 }
-export function createHeist(seed = 9019) {
+const CASH_SPOTS = [
+  [-5, 7],
+  [5, 7],
+  [-10, 0],
+  [10, 0],
+  [-7, -8],
+  [7, -8],
+  [-3, -5],
+  [3, -5],
+  [-10, 8],
+  [10, 8],
+  [-3, 3],
+  [3, 3],
+  [-10, -4],
+  [10, -4],
+  [-6, -2],
+  [6, -2],
+];
+export function createHeist(seed = 9019, rules = HEIST_RULES) {
+  if (![HEIST_RULES, LEGACY_HEIST_RULES].includes(rules))
+    throw Error("Unsupported heist rules.");
   // Fixed mission layout makes route planning learnable; seed offsets patrol timing.
   return {
-    rules: HEIST_RULES,
+    rules,
     seed,
     tick: 0,
     total: 0,
     phase: 0,
     score: 0,
     health: 6,
+    loot:
+      rules === HEIST_RULES
+        ? CASH_SPOTS.slice(0, 8).map(([x, z], id) => ({
+            id,
+            x,
+            z,
+            value: z < -4 ? 250 : 100,
+            ready: 0,
+            generation: 0,
+            taken: false,
+          }))
+        : [],
+    lootTaken: 0,
+    lootCash: 0,
     player: {
       ...START,
       heading: Math.PI,
@@ -178,6 +214,37 @@ function security(s) {
 }
 function objectives(s) {
   const crew = [s.player, ...s.ghosts];
+  for (const bag of s.loot) {
+    if (bag.taken && s.total >= bag.ready) {
+      // Rotate drops away from every crew member: camping cannot farm respawns.
+      const offset = (bag.id + bag.generation * 5) % CASH_SPOTS.length;
+      const spot = Array.from(
+        { length: CASH_SPOTS.length },
+        (_, i) => CASH_SPOTS[(offset + i) % CASH_SPOTS.length],
+      ).find(
+        ([x, z]) =>
+          crew.every((p) => dist(p, { x, z }) > 3) &&
+          s.loot.every(
+            (other) =>
+              other === bag || other.taken || dist(other, { x, z }) > 1.5,
+          ),
+      );
+      if (spot) {
+        [bag.x, bag.z] = spot;
+        bag.value = bag.z < -4 ? 250 : 100;
+        bag.taken = false;
+      }
+    }
+    if (!bag.taken && crew.some((p) => dist(bag, p) < 1.1)) {
+      bag.taken = true;
+      bag.ready = s.total + LOOT_RESPAWN_TICKS;
+      bag.generation++;
+      s.score += bag.value;
+      s.lootTaken++;
+      s.lootCash += bag.value;
+      s.events.push({ type: "cash", x: bag.x, z: bag.z, points: bag.value });
+    }
+  }
   for (const cell of s.cells)
     if (!cell.taken && crew.some((p) => dist(cell, p) < 0.9)) {
       cell.taken = true;
@@ -293,13 +360,13 @@ export function heistObjective(s) {
         ? "Security caught you. Your next route can change the outcome."
         : "Lockdown. Plan wider routes for your next crew.";
   if (s.cellsTaken < 3)
-    return `Collect ${3 - s.cellsTaken} more power cells. Roam widely to record a useful route.`;
+    return `Grab ${3 - s.cellsTaken} more blue keycards to unlock the relay job. Green bags add cash.`;
   if (s.phase === 0)
-    return "Your route is recording. Visit both sides so your echo can help later.";
+    return "Grab green cash bags while recording your route. An echo joins when this pass ends.";
   if (s.relays.some((r) => !r.open))
     return "Sweep the line between you and an echo through both pink relays.";
   if (s.phase === 1)
-    return "Relays broken. Record a different route to open up your final triangle.";
+    return "Relays down. Grab more cash on the opposite side to record a wider crew.";
   if (!s.vaultOpen)
     return "Keep the gold vault INSIDE your squad triangle to charge the EMP.";
   return "Vault cracked! Reach the green getaway van before lockdown.";
@@ -308,7 +375,7 @@ export function exportHeist(s) {
   if (!s.done) throw Error("Finish the mission before exporting.");
   return {
     schema: 1,
-    rules: HEIST_RULES,
+    rules: s.rules,
     seed: s.seed,
     score: s.score,
     outcome: s.outcome,
@@ -319,14 +386,14 @@ export function replayHeist(data) {
   if (
     !data ||
     data.schema !== 1 ||
-    data.rules !== HEIST_RULES ||
+    ![HEIST_RULES, LEGACY_HEIST_RULES].includes(data.rules) ||
     !Number.isInteger(data.seed) ||
     !Array.isArray(data.inputs) ||
     data.inputs.length < 1 ||
     data.inputs.length > MAX_TICKS
   )
     throw Error("Unsupported heist replay.");
-  const s = createHeist(data.seed);
+  const s = createHeist(data.seed, data.rules);
   for (const a of data.inputs) {
     if (
       !a ||

@@ -9,7 +9,10 @@ import {
   MAX_TICKS,
   blocked,
   surrounds,
+  LEGACY_HEIST_RULES,
+  LOOT_RESPAWN_TICKS,
 } from "../src/heist-sim.js";
+import { missionTarget } from "../src/heist-guide.js";
 import { scriptedHeist } from "./fixtures/heist-route.mjs";
 
 test("full heist is winnable through controls and replays exactly", () => {
@@ -111,4 +114,77 @@ test("vault geometry rejects collapsed or exterior triangles", () => {
   assert.ok(surrounds(p, { x: -5, z: -4 }, { x: 5, z: -4 }, { x: 0, z: 7 }));
   assert.ok(!surrounds(p, { x: -5, z: 2 }, { x: 5, z: 2 }, { x: 0, z: 7 }));
   assert.ok(!surrounds(p, { x: -5, z: 0 }, { x: 5, z: 0 }, { x: 1, z: 0 }));
+});
+
+test("cash pays once per pickup and respawns away from a camping crew", () => {
+  const s = createHeist();
+  const first = s.loot[0];
+  while (!first.taken && s.total < 100) {
+    const x = first.x - s.player.x,
+      z = first.z - s.player.z,
+      length = Math.hypot(x, z);
+    stepHeist(s, { x: x / length, z: z / length });
+  }
+  assert.ok(first.taken);
+  assert.equal(s.lootTaken, 1);
+  assert.equal(s.lootCash, 100);
+  assert.equal(first.ready, s.total - 1 + LOOT_RESPAWN_TICKS);
+  for (let i = 0; i < 15; i++) stepHeist(s, {});
+  assert.equal(
+    s.lootCash,
+    100,
+    "standing on a collected drop never scores again",
+  );
+  s.total = first.ready;
+  stepHeist(s, {});
+  assert.ok(!first.taken);
+  assert.ok(Math.hypot(first.x - s.player.x, first.z - s.player.z) > 3);
+  assert.ok(!blocked(first));
+  assert.equal(s.loot.length, 8);
+});
+
+test("a recorded echo can earn real cash for the crew", () => {
+  const s = createHeist(),
+    bag = s.loot[0];
+  s.phase = 1;
+  s.tracks = [[{ x: bag.x, z: bag.z, heading: 0, dash: 0, moving: false }]];
+  stepHeist(s, {});
+  assert.ok(bag.taken);
+  assert.equal(s.lootTaken, 1);
+  assert.equal(s.lootCash, bag.value);
+  assert.ok(s.events.some((e) => e.type === "cash" && e.points === bag.value));
+});
+
+test("old heist replays preserve their original result after the loot update", () => {
+  const s = scriptedHeist(9019, LEGACY_HEIST_RULES);
+  assert.equal(s.score, 6515);
+  assert.equal(s.total, 3248);
+  assert.equal(s.lootTaken, 0);
+  assert.equal(replayHeist(exportHeist(s)).score, 6515);
+});
+
+test("guidance follows the real objective and offers a valid vault triangle", () => {
+  const s = createHeist();
+  let target = missionTarget(s);
+  assert.equal(target.label, "KEYCARD");
+  assert.ok(
+    s.cells.some((c) => c.x === target.x && c.z === target.z && !c.taken),
+  );
+  s.cellsTaken = 3;
+  assert.ok(missionTarget(s).label.startsWith("$"));
+  s.phase = 1;
+  assert.equal(missionTarget(s).label, "BREAK RELAY");
+  s.phase = 2;
+  s.relays.forEach((r) => (r.open = true));
+  s.ghosts = [
+    { x: -8, z: -5 },
+    { x: 8, z: -5 },
+  ];
+  s.player = { x: 0, z: -6 };
+  target = missionTarget(s);
+  assert.equal(target.label, "MOVE HERE");
+  assert.ok(!blocked(target));
+  assert.ok(surrounds({ x: 0, z: -2 }, target, ...s.ghosts));
+  s.exitOpen = true;
+  assert.equal(missionTarget(s).label, "GETAWAY");
 });

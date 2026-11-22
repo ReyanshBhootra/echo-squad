@@ -12,7 +12,7 @@ A booth game needs to make sense before the next person in line gets impatient. 
 
 ## What it does
 
-Echo Heist is one original 3D district and a 75-second mission. During SCOUT, collect power and record your route. During SYNC, that route replays: sweep your connecting line through two shielded relays. During ESCAPE, two prior routes form your crew. Hold the vault inside the squad triangle to trigger an EMP, then reach the getaway van. Drone targeting warnings, cover and a dash make positioning matter.
+Echo Heist is one original 3D district and a 75-second mission. During SCOUT, collect keycards, take replenishing cash bags and record your route. During SYNC, that route replays: sweep your connecting line through two shielded relays. During ESCAPE, two prior routes form your crew. Hold the vault inside the squad triangle to trigger an EMP, then reach the getaway van. Drone targeting warnings, cover and a dash make positioning matter. Green duffel bags pay $100/$250 and replenish away from the crew; echoes can collect them too. A visible cash counter, radar, objective marker and optional $10,000 haul challenge give the short mission a running incentive.
 
 Keyboard movement responds directly, the camera stays fixed, sound is opt-in and quiet effects reduce motion/GPU work. Original code-built city meshes, animated crew, warning effects, physical materials, vault and getaway feedback support the mission. Completed runs have deterministic replay and export. A separate station-local score board and spectator view support booth operation. Classic mode preserves the original mouse game and its neural experiment.
 

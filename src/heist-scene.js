@@ -92,20 +92,22 @@ export function createHeistScene(canvas) {
   }
   function sign(parent, text, w, x, y, z, color = 0xff83ab) {
     const c = document.createElement("canvas");
-    c.width = 512;
+    const measure = c.getContext("2d");
+    measure.font = "bold 96px Impact, sans-serif";
+    c.width = Math.max(128, Math.ceil(measure.measureText(text).width + 32));
     c.height = 128;
     const ctx = c.getContext("2d");
     ctx.fillStyle = "#101625";
-    ctx.fillRect(0, 0, 512, 128);
+    ctx.fillRect(0, 0, c.width, 128);
     ctx.fillStyle = `#${color.toString(16).padStart(6, "0")}`;
-    ctx.font = "bold 68px Impact, sans-serif";
+    ctx.font = "bold 96px Impact, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(text, 256, 70, 480);
+    ctx.fillText(text, c.width / 2, 70, c.width - 24);
     const texture = new T.CanvasTexture(c);
     texture.colorSpace = T.SRGBColorSpace;
     const mesh = new T.Mesh(
-      new T.PlaneGeometry(w, w / 4),
+      new T.PlaneGeometry(w, (w * c.height) / c.width),
       new T.MeshBasicMaterial({ map: texture, side: T.DoubleSide }),
     );
     mesh.position.set(x, y, z);
@@ -356,18 +358,29 @@ export function createHeistScene(canvas) {
     actor(COLORS[2], "ECHO 02"),
   ];
   const cellMeshes = Array.from({ length: 10 }, () => {
-    const mesh = new T.Mesh(
-      new T.OctahedronGeometry(0.34),
-      new T.MeshStandardMaterial({
-        color: 0xc1fbff,
-        emissive: 0x2fd6eb,
-        emissiveIntensity: 1.1,
-        metalness: 0.4,
-        roughness: 0.25,
-      }),
+    const g = new T.Group();
+    scene.add(g);
+    box(g, 1.05, 0.7, 0.14, 0, 0, 0, 0x54cddd, 0.4, 0.25);
+    box(g, 0.75, 0.13, 0.03, 0, 0.12, 0.09, 0xe7fcff);
+    box(g, 0.24, 0.2, 0.03, -0.23, -0.14, 0.09, 0xffffff);
+    const halo = ring(g, 0.8, 0x74f0ff, -0.7, 0.035);
+    return g;
+  });
+  const cashMeshes = Array.from({ length: 8 }, () => {
+    const g = new T.Group();
+    scene.add(g);
+    box(g, 1.3, 0.6, 0.65, 0, 0.42, 0, 0x4d9e69, 0.15, 0.8);
+    for (const x of [-0.38, 0.38])
+      box(g, 0.12, 0.63, 0.69, x, 0.43, 0, 0x173b2b);
+    const handle = new T.Mesh(
+      new T.TorusGeometry(0.22, 0.045, 5, 12),
+      material(0x173b2b),
     );
-    scene.add(mesh);
-    return mesh;
+    handle.position.set(0, 0.8, 0);
+    g.add(handle);
+    const label = sign(g, "$", 0.8, 0, 0.47, 0.35, 0xc5ff9b);
+    const halo = ring(g, 1, 0xa0ee83, 0.06, 0.055);
+    return { g, halo };
   });
   const relayMeshes = [-4, 4].map((x) => {
     const g = new T.Group();
@@ -474,13 +487,15 @@ export function createHeistScene(canvas) {
     finishTime = null;
   function burst(e, time) {
     const color =
-      e.type === "cell"
-        ? COLORS[0]
-        : e.type === "relay"
-          ? COLORS[1]
-          : e.type === "damage"
-            ? 0xff655c
-            : COLORS[2];
+      e.type === "cash"
+        ? 0xa0ee83
+        : e.type === "cell"
+          ? COLORS[0]
+          : e.type === "relay"
+            ? COLORS[1]
+            : e.type === "damage"
+              ? 0xff655c
+              : COLORS[2];
     const count = e.type === "vault" ? 26 : 7;
     for (let i = 0; i < count; i++) {
       const mesh = new T.Mesh(
@@ -528,7 +543,11 @@ export function createHeistScene(canvas) {
     if (lastTotal !== s.total) {
       if (effects)
         for (const event of events)
-          if (["cell", "relay", "vault", "damage", "dash"].includes(event.type))
+          if (
+            ["cash", "cell", "relay", "vault", "damage", "dash"].includes(
+              event.type,
+            )
+          )
             burst(event, time);
       lastTotal = s.total;
     }
@@ -565,6 +584,15 @@ export function createHeistScene(canvas) {
         cell.z,
       );
       mesh.rotation.y = effects ? time * 0.6 : 0;
+    });
+    cashMeshes.forEach((mesh, i) => {
+      const bag = s.loot[i];
+      mesh.g.visible = !!bag && !bag.taken;
+      if (!bag) return;
+      mesh.g.position.set(bag.x, 0, bag.z);
+      mesh.halo.scale.setScalar(
+        effects ? 1 + Math.sin(time * 2 + i) * 0.08 : 1,
+      );
     });
     relayMeshes.forEach((r, i) => {
       const relay = s.relays[i];
@@ -671,5 +699,15 @@ export function createHeistScene(canvas) {
     resize();
   }
   resize();
-  return { render, resize, setQuality, renderer };
+  function project(x, z, y = 1.7) {
+    camera.updateMatrixWorld();
+    const p = new T.Vector3(x, y, z).project(camera),
+      r = canvas.getBoundingClientRect();
+    return {
+      x: r.left + ((p.x + 1) * r.width) / 2,
+      y: r.top + ((1 - p.y) * r.height) / 2,
+      visible: p.z > -1 && p.z < 1 && Math.abs(p.x) < 1 && Math.abs(p.y) < 1,
+    };
+  }
+  return { render, resize, setQuality, renderer, project };
 }

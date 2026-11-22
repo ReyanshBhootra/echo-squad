@@ -14,6 +14,7 @@ const types = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".pdf": "application/pdf",
+  ".ttf": "font/ttf",
 };
 http
   .createServer(async (req, res) => {

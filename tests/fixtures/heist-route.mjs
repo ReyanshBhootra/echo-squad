@@ -6,8 +6,8 @@ import {
   linkDistance,
   blocked,
 } from "../../src/heist-sim.js";
-export function scriptedHeist(seed = 9019) {
-  const s = createHeist(seed);
+export function scriptedHeist(seed = 9019, rules) {
+  const s = createHeist(seed, rules);
   let waypoint = 0,
     anchored = false;
   const route = [

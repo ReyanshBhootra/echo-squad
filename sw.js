@@ -1,4 +1,4 @@
-const CACHE = "echo-squad-v8-heist";
+const CACHE = "echo-squad-v9-cash-job";
 const FILES = [
   "./",
   "./index.html",
@@ -8,6 +8,11 @@ const FILES = [
   "./src/heist-app.js",
   "./src/heist-sim.js",
   "./src/heist-scene.js",
+  "./src/heist-guide.js",
+  "./assets/fonts/Anton-Regular.ttf",
+  "./assets/fonts/BowlbyOneSC-Regular.ttf",
+  "./assets/fonts/anton-OFL.txt",
+  "./assets/fonts/bowlbyonesc-OFL.txt",
   "./assets/vendor/three.module.js",
   "./assets/vendor/three.core.js",
   "./assets/vendor/THREE-LICENSE.txt",

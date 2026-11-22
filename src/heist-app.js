@@ -11,6 +11,7 @@ import {
   HEIST_RULES,
 } from "./heist-sim.js";
 import { download, localDate } from "./storage.js";
+import { cash, heistRank, missionTarget, drawRadar } from "./heist-guide.js";
 
 const $ = (id) => document.getElementById(id),
   canvas = $("district");
@@ -40,7 +41,7 @@ try {
 } catch {}
 let effects = preference !== "quiet" && !reduce.matches;
 const SCORE_KEY = `${HEIST_RULES}-scores`,
-  format = (n) => n.toLocaleString("en-US");
+  format = cash;
 const station =
   typeof BroadcastChannel !== "undefined"
     ? new BroadcastChannel("echo-squad-station")
@@ -140,12 +141,14 @@ function notify(text, seconds = 1.2) {
 function processEvents() {
   let soundEvent = null;
   for (const e of world.events) {
+    if (e.points) reward(e);
+    if (e.type === "cash") soundEvent ??= "cell";
     if (e.type === "cell") {
-      if (world.cellsTaken <= 3) notify(`POWER ${world.cellsTaken} / 3`, 0.6);
+      if (world.cellsTaken <= 3) notify(`KEYCARD ${world.cellsTaken} / 3`, 0.6);
       soundEvent ??= "cell";
     }
     if (e.type === "relay") {
-      notify("RELAY DOWN", 0.9);
+      notify("RELAY DOWN · +$350", 0.9);
       soundEvent = "relay";
     }
     if (e.type === "damage") {
@@ -153,7 +156,7 @@ function processEvents() {
       soundEvent = "damage";
     }
     if (e.type === "vault") {
-      notify("VAULT CRACKED. GET OUT.", 2);
+      notify("+$1,200. GET TO THE VAN.", 2);
       soundEvent = "vault";
     }
     if (e.type === "escape") {
@@ -177,6 +180,8 @@ function processEvents() {
   if (soundEvent) tone(soundEvent);
 }
 function showGame() {
+  $("radar-panel").hidden = false;
+  $("cash-feedback").replaceChildren();
   $("brief").hidden = true;
   $("end").hidden = true;
   $("pause-menu").hidden = true;
@@ -226,6 +231,12 @@ function lobby() {
   ])
     $(id).hidden = true;
   $("brief").hidden = false;
+  $("radar-panel").hidden = true;
+  $("target-marker").hidden = true;
+  $("cash-feedback").replaceChildren();
+  $("personal-best").textContent = rows().length
+    ? `STATION BEST ${cash(rows()[0].score)}`
+    : "CHASE A $10,000 GETAWAY";
   $("begin").focus({ preventScroll: true });
 }
 $("lobby").onclick = lobby;
@@ -281,12 +292,12 @@ function showResults() {
         : "Lockdown.";
   $("end-score").textContent = format(world.score);
   $("end-summary").textContent =
-    `${world.cellsTaken} power cells · ${world.stats.links} relays · ${world.stats.dashes} dashes · ${world.stats.hits} armor hits`;
+    `${heistRank(world)} · ${world.lootTaken} cash bags (${cash(world.lootCash)}) · ${world.stats.links} relays · ${world.stats.hits} armor hits`;
   $("end-tip").textContent =
     world.outcome === "escaped"
       ? "Your past selves pulled it off. Try a faster, cleaner escape."
       : world.cellsTaken < 3
-        ? "First priority: collect three blue cells, then roam to record a wider route."
+        ? "Follow the blue KEYCARD marker. Get three cards, grab green cash bags, and keep moving."
         : world.stats.links < 2
           ? "Next run: put your first route on one side, then sweep your link across the pink relays."
           : !world.vaultOpen
@@ -302,7 +313,7 @@ $("watch").onclick = () => {
     $("save-status").textContent = err.message;
     return;
   }
-  world = createHeist(lastRun.seed);
+  world = createHeist(lastRun.seed, lastRun.rules);
   mode = "replay";
   isReplay = true;
   phaseHold = 0;
@@ -428,17 +439,33 @@ function update() {
     (isReplay ? "REPLAY · " : "") + titles[world.phase];
   $("mission").textContent = world.vaultOpen
     ? "Get to the getaway van."
-    : world.phase === 0
-      ? "Steal power. Record a useful route."
-      : world.phase === 1
-        ? "Break both relay shields with your link."
-        : "Open the vault with your crew.";
+    : world.cellsTaken < 3
+      ? "Grab 3 keycards. Take the cash."
+      : world.phase === 0
+        ? "Grab cash. Record your crew."
+        : world.relays.some((r) => !r.open)
+          ? "Break both relay shields with your link."
+          : world.phase === 1
+            ? "Relays down. Keep taking cash."
+            : "Surround the vault. Take $1,200.";
   $("time").textContent = String(
     Math.max(0, Math.ceil((MAX_TICKS - world.total) / HZ)),
   ).padStart(2, "0");
   $("loot").textContent = format(world.score);
   $("armor").textContent = `${world.health} / 6`;
-  $("cells").textContent = `POWER ${Math.min(3, world.cellsTaken)} / 3`;
+  $("cells").textContent = `KEYCARDS ${Math.min(3, world.cellsTaken)} / 3`;
+  $("heat").textContent =
+    "★".repeat(world.phase + 1) + "☆".repeat(2 - world.phase);
+  $("heat").setAttribute(
+    "aria-label",
+    `Security intensity ${world.phase + 1} of 3`,
+  );
+  $("health-fill").style.transform = `scaleX(${world.health / 6})`;
+  $("take-goal").textContent =
+    world.score >= 10000 ? "$10K TARGET REACHED" : "TARGET $10,000";
+  $("haul-fill").style.transform =
+    `scaleX(${Math.min(1, world.score / 10000)})`;
+  drawRadar($("radar"), world);
   $("relays").textContent = `RELAYS ${world.stats.links} / 2`;
   $("vault").textContent = world.vaultOpen
     ? "VAULT OPEN"
@@ -454,6 +481,33 @@ function update() {
     : `${world.phase < 2 ? "NEXT ECHO" : "LOCKDOWN"} IN ${Math.ceil((PASS_TICKS - world.tick) / HZ)}s`;
   $("pass-fill").style.transform =
     `scaleX(${Math.min(1, world.tick / PASS_TICKS)})`;
+}
+function reward(event) {
+  if (!view) return;
+  const point = view.project(event.x, event.z, 2);
+  if (!point.visible) return;
+  const label = document.createElement("span");
+  label.className = "cash-pop" + (effects ? "" : " quiet");
+  label.textContent = "+" + cash(event.points);
+  label.style.left = `${point.x}px`;
+  label.style.top = `${point.y}px`;
+  $("cash-feedback").append(label);
+  setTimeout(() => label.remove(), 1000);
+}
+function updateTarget() {
+  const marker = $("target-marker");
+  const target =
+    ["playing", "replay"].includes(mode) && phaseHold === 0
+      ? missionTarget(world)
+      : null;
+  const point = target && view?.project(target.x, target.z, 2.8);
+  marker.hidden = !point?.visible;
+  if (marker.hidden) return;
+  marker.style.left = `${point.x}px`;
+  marker.style.top = `${point.y}px`;
+  marker.style.setProperty("--target", target.color);
+  $("target-label").textContent = target.label;
+  $("target-detail").textContent = target.detail;
 }
 function frame(now) {
   const frameEvents = [];
@@ -486,6 +540,7 @@ function frame(now) {
   if (view && mode !== "error") {
     try {
       view.render(world, now / 1000, effects, frameEvents);
+      updateTarget();
     } catch (err) {
       mode = "error";
       $("graphics-error").hidden = false;
@@ -520,7 +575,10 @@ try {
   view.setQuality(effects);
   mode = "lobby";
   $("begin").disabled = false;
-  $("begin").textContent = "Start the heist";
+  $("begin").textContent = "Accept the job →";
+  $("personal-best").textContent = rows().length
+    ? `STATION BEST ${cash(rows()[0].score)}`
+    : "CHASE A $10,000 GETAWAY";
   $("boot-status").textContent =
     "District ready. Your first echo arrives in 25 seconds.";
   requestAnimationFrame(frame);

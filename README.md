@@ -18,11 +18,21 @@ npm start
 
 Open http://127.0.0.1:4173 in a modern desktop browser. Serve over HTTP, rather than double-clicking index.html: ES modules and offline caching need a suitable origin. The server binds only to this machine. After first load and successful cache installation, the browser can use cached assets without the server; keep the server running for the simplest booth setup. A browser reload, model loading and training-lab rendering were verified with the local server stopped.
 
-## Echo Heist — build 0.6.0
+## Cash Job update — build 0.7.0
+
+There are now green duffel bags worth $100 or $250 throughout the district. Collected bags replenish after six active seconds at a different free location away from the crew. Higher-value bags sit near the northern security patrol. Echoes collect bags too. All pickup value is added to the visible cash counter with local +$ feedback. The $10,000 target is an optional score challenge; escaping still completes the mission below that target. Pickup, relay, vault, armor/time and escape rewards use the same score total displayed as fictional heist cash.
+
+The original small power diamonds are now recognizable blue keycards: collect three to power the relay job. A projected next-objective marker names the keycard, cash bag, relay or getaway. During the final triangle stage, it suggests a currently valid position when one is available; this is geometric guidance, not a guarantee that moving echoes will hold that formation. A compact radar shows cash, cards, relays, vault, exit and crew. Security stars show the actual pass-based difficulty; armor and haul have progress bars.
+
+The website and HUD now use locally bundled Bowlby One SC and Anton, white outlined display text, green cash, yellow job accents and dark square panels, inspired by the user's GTA interface preference. These are open fonts, not Rockstar assets; see THIRD_PARTY.md. World-label textures fit their text rather than shrinking short labels into oversized canvases. Input, fixed camera, quiet effects and opt-in sound remain.
+
+Rules are versioned as echo-heist-2; original echo-heist-1 replay results remain reproducible and old scores are retained in their separate storage key. No classic neural artifacts were changed. Automated checks cover loot scoring/respawn/camping avoidance, echo pickup credit, objective guidance, exact replay and the legacy result. Browser tools remain unavailable: device visual/layout/comfort checks are pending. The supplied screenshot shows the previous rendered district; it is not a screenshot of this update.
+
+## Echo Heist mission
 
 Open the home page in a WebGL2-capable browser. WASD/arrows move immediately; Space dashes with a 2.2-second cooldown; Escape pauses. The camera stays fixed. Touch direction/dash buttons are provided, but mobile comfort and GPU performance have not been verified.
 
-- SCOUT, 25 seconds: collect at least three blue power cells and record a useful moving route.
+- SCOUT, 25 seconds: collect at least three blue keycards and record a useful moving route.
 - SYNC, 25 seconds: your exact first route replays. Sweep your connecting line through both pink relays for 0.3 seconds each to break their shields.
 - ESCAPE, 25 seconds: two earlier routes replay. Surround the gold vault with your squad triangle for 0.6 seconds, then reach the green getaway van.
 

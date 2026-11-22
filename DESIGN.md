@@ -1,3 +1,13 @@
+# Current direction — Cash Job, build 0.7.0
+
+User's screenshot and feedback: the courtyard feels empty, pickups lack meaning, and the interface should take cues from GTA typography/UI. Address reward clarity and continuous movement incentive together. Eight green duffel bags give $100/$250, replenishing six seconds after collection at another unoccupied location away from the crew. Blue objects become physical keycards; three still unlock the relay job. A cash counter, floating pickup value, optional $10,000 score challenge, actual crew rank, objective marker and local radar explain what to chase. Core recorded-self/line/triangle/escape mechanics stay central.
+
+Use locally bundled OFL Bowlby One SC for chunky white outlined headings, Anton for condensed game numerals/labels, money green and job yellow. Dark square panels replace rounded glass panels. No Rockstar fonts or art are redistributed. World sign textures now fit their word width so labels don't waste most of their texture on padding. Radar and target labels are functional; pickup motion stays local and respects quiet/reduced-motion preferences. No cursor follower or moving camera added.
+
+The screenshot is user feedback on0.6.0, not proof of0.7.0 rendering or enjoyment. Browser/GPU inspection and actual fun validation are still pending. Main heist rules are echo-heist-2 with legacy replay compatibility; classic neural evidence remains unchanged and separate.
+
+## Earlier direction
+
 # Current direction — Echo Heist, build 0.6.0
 
 Approved by the user on November 22. One original 3D coastal-night district, one complete scout/sync/escape mission. Preserve ECHO SQUAD’s recorded-self teamwork: cells use points, relay shields use links, the vault uses a triangle. The new mission is separate from the classic simulator and ML benchmark. Nothing claims that classic weights learned heist mechanics.

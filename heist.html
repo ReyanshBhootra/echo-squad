@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#101625" />
+    <meta name="theme-color" content="#111713" />
     <meta
       name="description"
       content="One player. Three chances. Record your own crew, crack the vault and escape a 75-second 3D heist."
@@ -11,6 +11,20 @@
     <title>ECHO SQUAD — Echo Heist</title>
     <link rel="icon" href="./icon.svg" />
     <link rel="stylesheet" href="./heist.css" />
+    <link
+      rel="preload"
+      href="./assets/fonts/BowlbyOneSC-Regular.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="./assets/fonts/Anton-Regular.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
   </head>
   <body>
     <canvas
@@ -21,7 +35,7 @@
     <div class="vignette" aria-hidden="true"></div>
     <header class="topbar">
       <a href="./" class="brand"
-        >ECHO <span>SQUAD</span><small>AFTER HOURS</small></a
+        >ECHO <span>SQUAD</span><small>AFTER HOURS / ECHO HEIST</small></a
       >
       <div class="tools">
         <button id="quality" aria-pressed="true">Effects on</button
@@ -31,16 +45,15 @@
     </header>
     <main>
       <section id="brief" class="panel brief" aria-labelledby="heist-title">
-        <p class="eyebrow">ONE PLAYER. THREE CHANCES.</p>
+        <p class="eyebrow">ECHO DISTRICT · SOLO JOB · 75 SECONDS</p>
         <h1 id="heist-title">ECHO<br /><em>HEIST.</em></h1>
-        <p class="tagline">
-          Your getaway crew is you.<br />From twenty-five seconds ago.
-        </p>
+        <p class="tagline">Take the money.<br />Bring your past selves.</p>
         <ol class="brief-steps">
-          <li><b>SCOUT</b> Steal power. Record your route.</li>
+          <li><b>SCOUT</b> Grab keycards. Fill the duffel.</li>
           <li><b>SYNC</b> Link with your echo. Break the relays.</li>
-          <li><b>ESCAPE</b> Surround the vault. Get out alive.</li>
+          <li><b>ESCAPE</b> Crack the vault. Make the getaway.</li>
         </ol>
+        <p id="personal-best" class="personal-best">CHASE A $10,000 GETAWAY</p>
         <button id="begin" class="primary" disabled>
           Loading the district…
         </button>
@@ -56,12 +69,23 @@
       <section id="hud" class="hud" aria-label="Mission status" hidden>
         <div class="phase-label">
           <small id="pass-label">SCOUT / PASS 01</small
-          ><strong id="mission">Collect 3 power cells.</strong>
+          ><strong id="mission">Grab 3 keycards. Take the cash.</strong>
         </div>
         <div class="stats">
-          <div><small>LOCKDOWN</small><b id="time">75</b></div>
-          <div><small>LOOT</small><b id="loot">0</b></div>
-          <div><small>ARMOR</small><b id="armor">6 / 6</b></div>
+          <div class="clock-stat">
+            <small>LOCKDOWN</small><b id="time">75</b>
+          </div>
+          <div class="cash-stat">
+            <small>ON THE TAKE</small><b id="loot">$0</b
+            ><small id="take-goal">TARGET $10,000</small
+            ><span class="haul-track"><i id="haul-fill"></i></span>
+          </div>
+          <div class="armor-stat">
+            <small>SECURITY</small
+            ><b id="heat" aria-label="Security intensity">★☆☆</b
+            ><small>ARMOR <span id="armor">6 / 6</span></small
+            ><span class="health-track"><i id="health-fill"></i></span>
+          </div>
         </div>
         <div class="mission-progress"><span id="pass-fill"></span></div>
       </section>
@@ -69,11 +93,24 @@
         <span id="objective-copy"></span><b id="objective-timer"></b>
       </div>
       <aside id="loadout" class="loadout" hidden>
-        <span id="cells">POWER 0 / 3</span><span id="relays">RELAYS 0 / 2</span
+        <span id="cells">KEYCARDS 0 / 3</span
+        ><span id="relays">RELAYS 0 / 2</span
         ><span id="vault">VAULT LOCKED</span><span id="dash">DASH READY</span
         ><button id="pause">Pause</button>
       </aside>
       <div id="notice" class="notice" role="status" hidden></div>
+      <div id="cash-feedback" aria-hidden="true"></div>
+      <div id="target-marker" hidden aria-hidden="true">
+        <b id="target-label"></b><span id="target-detail"></span><i>▼</i>
+      </div>
+      <aside
+        id="radar-panel"
+        hidden
+        aria-label="District radar. White is you, green is cash, blue is keycards, pink is relays and gold is the vault."
+      >
+        <canvas id="radar" width="192" height="128"></canvas
+        ><small>ECHO DISTRICT <span>GREEN = CASH</span></small>
+      </aside>
       <section
         id="pause-menu"
         class="panel modal"
@@ -95,7 +132,7 @@
       >
         <p class="eyebrow" id="end-label">MISSION COMPLETE</p>
         <h2 id="end-title">Crew clear.</h2>
-        <strong class="end-score" id="end-score">0</strong>
+        <strong class="end-score" id="end-score">$0</strong>
         <p id="end-summary"></p>
         <p id="end-tip" class="end-tip"></p>
         <form id="record-form">
@@ -139,7 +176,7 @@
       <button id="touch-dash">DASH</button>
     </div>
     <footer id="lobby-footer">
-      <span>ORIGINAL DISTRICT / BUILD 0.6.0</span
+      <span>ECHO HEIST / BUILD 0.7.0</span
       ><button id="spectator">Spectator station</button
       ><a
         href="https://github.com/ReyanshBhootra/echo-squad"

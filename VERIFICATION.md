@@ -1,3 +1,9 @@
+# Cash Job — build0.7.0 / November22,2026
+
+All34 Node tests pass. New coverage: one payment per bag pickup, six-second replenishment away from a camper, echo collection credit, legacy heist1 score6515/tick3248 preserved, actual objective selection and a valid suggested vault triangle. The ordinary-control integration route still escapes at tick3248, now6865points including2cashbags/$350,5armor. This fixture prioritizes the original mission and is not an optimized loot route or a human playtest. New heist2 replay reconstructs its full result; heist1 replays retain original scoring. Classic ML results/weights/raw evidence were not retrained or changed.
+
+Changed: visible replenishing bag meshes, larger keycards, world-label texture sizing, cash feedback/target, task marker, radar and locally hosted open display fonts; new rule version. Browser-control tools remain unavailable. No claim of visual/layout/performance/offline-cache/comfort verification for this release. User screenshot confirms the previous3D district rendered but conveys dissatisfaction with its purpose/UI. It is not a current-release screenshot or a passed playtest.
+
 # Echo Heist — November 22, 2026 / build 0.6.0
 
 Separate 60Hz mission rules, original locally rendered 3D district, direct keyboard/dash control, recorded echoes, relay links, triangle vault/EMP and escape. Classic engine, model and raw training artifacts are preserved.
