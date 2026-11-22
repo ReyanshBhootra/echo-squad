@@ -1,7 +1,17 @@
-const CACHE = "echo-squad-v7-first-run";
+const CACHE = "echo-squad-v8-heist";
 const FILES = [
   "./",
   "./index.html",
+  "./classic.html",
+  "./heist.html",
+  "./heist.css",
+  "./src/heist-app.js",
+  "./src/heist-sim.js",
+  "./src/heist-scene.js",
+  "./assets/vendor/three.module.js",
+  "./assets/vendor/three.core.js",
+  "./assets/vendor/THREE-LICENSE.txt",
+  "./THIRD_PARTY.md",
   "./style.css",
   "./after-hours.css",
   "./assets/after-hours.svg",

@@ -1,0 +1,537 @@
+import {
+  createHeist,
+  stepHeist,
+  exportHeist,
+  replayHeist,
+  heistObjective,
+  HSTEP,
+  HZ,
+  PASS_TICKS,
+  MAX_TICKS,
+  HEIST_RULES,
+} from "./heist-sim.js";
+import { download, localDate } from "./storage.js";
+
+const $ = (id) => document.getElementById(id),
+  canvas = $("district");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+const keys = new Set(),
+  touchKeys = new Map();
+let mode = "boot",
+  resumeMode = "playing",
+  world = createHeist(),
+  view = null,
+  last = 0,
+  accumulator = 0,
+  phaseHold = 0,
+  endDelay = 0,
+  dashQueued = false;
+let lastRun = null,
+  isReplay = false,
+  saved = false,
+  noticeUntil = 0,
+  broadcastAt = 0,
+  sound = false,
+  audio = null;
+let lastInput = Date.now();
+let preference = "on";
+try {
+  preference = localStorage.getItem("echo-squad-effects") || "on";
+} catch {}
+let effects = preference !== "quiet" && !reduce.matches;
+const SCORE_KEY = `${HEIST_RULES}-scores`,
+  format = (n) => n.toLocaleString("en-US");
+const station =
+  typeof BroadcastChannel !== "undefined"
+    ? new BroadcastChannel("echo-squad-station")
+    : null;
+function rows() {
+  try {
+    const data = JSON.parse(localStorage.getItem(SCORE_KEY) || "[]");
+    return Array.isArray(data)
+      ? data
+          .filter(
+            (r) =>
+              r &&
+              typeof r.name === "string" &&
+              Number.isFinite(r.score) &&
+              r.rules === HEIST_RULES,
+          )
+          .slice(0, 100)
+      : [];
+  } catch {
+    return [];
+  }
+}
+function setEffects(value, remember = false) {
+  if (remember) {
+    preference = value ? "on" : "quiet";
+    try {
+      localStorage.setItem("echo-squad-effects", preference);
+    } catch {}
+  }
+  effects = value && !reduce.matches;
+  $("quality").textContent = effects ? "Effects on" : "Effects quiet";
+  $("quality").setAttribute("aria-pressed", String(effects));
+  $("pause-quality").textContent = effects
+    ? "Switch to quiet effects"
+    : "Switch effects on";
+  view?.setQuality(effects);
+}
+$("quality").onclick = () => setEffects(!effects, true);
+$("pause-quality").onclick = () => setEffects(!effects, true);
+reduce.addEventListener("change", () => setEffects(preference !== "quiet"));
+setEffects(effects);
+function tone(type) {
+  if (!sound) return;
+  try {
+    audio ??= new AudioContext();
+    audio.resume();
+    const notes = {
+      cell: [660],
+      relay: [220, 330],
+      vault: [130.81, 164.81, 196],
+      damage: [90],
+      escape: [523.25, 659.25, 783.99],
+    }[type];
+    if (!notes) return;
+    notes.forEach((frequency, i) => {
+      const oscillator = audio.createOscillator(),
+        gain = audio.createGain(),
+        start = audio.currentTime + i * 0.035,
+        length = type === "vault" || type === "escape" ? 0.55 : 0.15;
+      oscillator.type = type === "damage" ? "triangle" : "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        frequency * (type === "damage" ? 0.45 : 1.3),
+        start + length,
+      );
+      gain.gain.setValueAtTime(0.028 / notes.length, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start(start);
+      oscillator.stop(start + length + 0.02);
+    });
+  } catch {
+    sound = false;
+    $("audio").textContent = "Sound unavailable";
+  }
+}
+$("audio").onclick = () => {
+  sound = !sound;
+  $("audio").textContent = sound ? "Sound on" : "Sound off";
+  $("audio").setAttribute("aria-pressed", String(sound));
+  if (sound) tone("cell");
+};
+function notify(text, seconds = 1.2) {
+  $("notice").textContent = text;
+  $("notice").hidden = false;
+  noticeUntil = performance.now() + seconds * 1000;
+  if (effects)
+    $("notice").animate(
+      [
+        { opacity: 0, transform: "translate(-50%,-40%) scale(.96)" },
+        { opacity: 1, transform: "translate(-50%,-50%) scale(1)" },
+      ],
+      { duration: 180, easing: "cubic-bezier(.23,1,.32,1)" },
+    );
+}
+function processEvents() {
+  let soundEvent = null;
+  for (const e of world.events) {
+    if (e.type === "cell") {
+      if (world.cellsTaken <= 3) notify(`POWER ${world.cellsTaken} / 3`, 0.6);
+      soundEvent ??= "cell";
+    }
+    if (e.type === "relay") {
+      notify("RELAY DOWN", 0.9);
+      soundEvent = "relay";
+    }
+    if (e.type === "damage") {
+      notify("ARMOR HIT", 0.55);
+      soundEvent = "damage";
+    }
+    if (e.type === "vault") {
+      notify("VAULT CRACKED. GET OUT.", 2);
+      soundEvent = "vault";
+    }
+    if (e.type === "escape") {
+      notify("CREW CLEAR", 1);
+      soundEvent = "escape";
+    }
+    if (e.type === "phase") {
+      phaseHold = 1.5;
+      accumulator = 0;
+      keys.clear();
+      touchKeys.clear();
+      dashQueued = false;
+      notify(
+        world.phase === 1
+          ? "ECHO 01 ONLINE. MAKE THE LINK."
+          : "FULL CREW. CRACK THE VAULT.",
+        1.5,
+      );
+    }
+  }
+  if (soundEvent) tone(soundEvent);
+}
+function showGame() {
+  $("brief").hidden = true;
+  $("end").hidden = true;
+  $("pause-menu").hidden = true;
+  $("hud").hidden = false;
+  $("loadout").hidden = false;
+  $("objective").hidden = false;
+  $("touch-controls").hidden = false;
+  document.body.classList.add("in-mission", "playing");
+  canvas.focus({ preventScroll: true });
+}
+function start() {
+  lastInput = Date.now();
+  world = createHeist();
+  isReplay = false;
+  saved = false;
+  mode = "playing";
+  phaseHold = 0;
+  accumulator = 0;
+  noticeUntil = 0;
+  keys.clear();
+  touchKeys.clear();
+  dashQueued = false;
+  $("notice").hidden = true;
+  $("callsign").value = "";
+  $("save-status").textContent = "";
+  showGame();
+  update();
+}
+$("begin").onclick = start;
+$("retry").onclick = start;
+function lobby() {
+  world = createHeist();
+  mode = "lobby";
+  phaseHold = 0;
+  keys.clear();
+  touchKeys.clear();
+  accumulator = 0;
+  document.body.classList.remove("in-mission", "playing");
+  for (const id of [
+    "hud",
+    "objective",
+    "loadout",
+    "end",
+    "pause-menu",
+    "notice",
+    "touch-controls",
+  ])
+    $(id).hidden = true;
+  $("brief").hidden = false;
+  $("begin").focus({ preventScroll: true });
+}
+$("lobby").onclick = lobby;
+$("quit").onclick = lobby;
+function pause() {
+  if (!["playing", "replay"].includes(mode)) return;
+  lastInput = Date.now();
+  resumeMode = mode;
+  mode = "paused";
+  keys.clear();
+  touchKeys.clear();
+  dashQueued = false;
+  $("pause-menu").hidden = false;
+  $("notice").hidden = true;
+  document.body.classList.remove("playing");
+  $("resume").focus({ preventScroll: true });
+}
+function resume() {
+  if (mode !== "paused") return;
+  lastInput = Date.now();
+  mode = resumeMode;
+  accumulator = 0;
+  $("pause-menu").hidden = true;
+  document.body.classList.add("playing");
+  canvas.focus({ preventScroll: true });
+}
+$("pause").onclick = pause;
+$("resume").onclick = resume;
+function finish() {
+  if (!isReplay) lastRun = exportHeist(world);
+  mode = "ending";
+  endDelay = 0.9;
+  keys.clear();
+  touchKeys.clear();
+  document.body.classList.remove("playing");
+}
+function showResults() {
+  lastInput = Date.now();
+  mode = "results";
+  $("end").hidden = false;
+  $("notice").hidden = true;
+  $("record-form").hidden = isReplay || saved;
+  $("end-label").textContent = isReplay
+    ? "RECORDED MISSION"
+    : world.outcome === "escaped"
+      ? "MISSION COMPLETE"
+      : "MISSION FAILED";
+  $("end-title").textContent =
+    world.outcome === "escaped"
+      ? "Crew clear."
+      : world.outcome === "caught"
+        ? "Caught in the act."
+        : "Lockdown.";
+  $("end-score").textContent = format(world.score);
+  $("end-summary").textContent =
+    `${world.cellsTaken} power cells · ${world.stats.links} relays · ${world.stats.dashes} dashes · ${world.stats.hits} armor hits`;
+  $("end-tip").textContent =
+    world.outcome === "escaped"
+      ? "Your past selves pulled it off. Try a faster, cleaner escape."
+      : world.cellsTaken < 3
+        ? "First priority: collect three blue cells, then roam to record a wider route."
+        : world.stats.links < 2
+          ? "Next run: put your first route on one side, then sweep your link across the pink relays."
+          : !world.vaultOpen
+            ? "Next run: record opposite routes so your final triangle can surround the gold vault."
+            : "The exit was open. Save a dash for the last run to the green van.";
+  $("retry").focus({ preventScroll: true });
+}
+$("watch").onclick = () => {
+  if (!lastRun) return;
+  try {
+    replayHeist(lastRun);
+  } catch (err) {
+    $("save-status").textContent = err.message;
+    return;
+  }
+  world = createHeist(lastRun.seed);
+  mode = "replay";
+  isReplay = true;
+  phaseHold = 0;
+  accumulator = 0;
+  keys.clear();
+  dashQueued = false;
+  showGame();
+  notify("YOUR RECORDED CREW", 1);
+  update();
+};
+$("export").onclick = () => {
+  if (lastRun) download("echo-heist-replay.json", JSON.stringify(lastRun));
+};
+$("record-form").onsubmit = (e) => {
+  e.preventDefault();
+  if (saved || isReplay || mode !== "results") return;
+  const name = $("callsign").value.trim();
+  if (!name) return;
+  try {
+    const scores = rows();
+    scores.push({
+      name,
+      score: world.score,
+      outcome: world.outcome,
+      seed: world.seed,
+      day: localDate(),
+      date: new Date().toISOString(),
+      rules: HEIST_RULES,
+      mode: "heist",
+    });
+    scores.sort((a, b) => b.score - a.score);
+    localStorage.setItem(SCORE_KEY, JSON.stringify(scores.slice(0, 100)));
+    saved = true;
+    $("record-form").hidden = true;
+    $("save-status").textContent =
+      "Saved on this station. The next crew has a score to beat.";
+  } catch {
+    $("save-status").textContent =
+      "Station storage is unavailable. Download your replay to keep the run.";
+  }
+};
+$("callsign").addEventListener("input", () => (lastInput = Date.now()));
+$("spectator").onclick = () =>
+  window.open("./spectator.html", "echo-squad-spectator", "noopener");
+function action() {
+  const held = (key) => keys.has(key) || [...touchKeys.values()].includes(key);
+  const a = {
+    x:
+      (held("d") || held("ArrowRight") ? 1 : 0) -
+      (held("a") || held("ArrowLeft") ? 1 : 0),
+    z:
+      (held("s") || held("ArrowDown") ? 1 : 0) -
+      (held("w") || held("ArrowUp") ? 1 : 0),
+    dash: dashQueued,
+  };
+  if (a.x || a.z || a.dash) lastInput = Date.now();
+  dashQueued = false;
+  return a;
+}
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest("input,textarea,select")) return;
+  if (e.key === " " && e.target.closest("button,a")) return;
+  if (e.key === "Escape") {
+    e.preventDefault();
+    mode === "paused" ? resume() : pause();
+    return;
+  }
+  if (mode !== "playing") return;
+  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (
+    [
+      "w",
+      "a",
+      "s",
+      "d",
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      " ",
+    ].includes(key)
+  ) {
+    e.preventDefault();
+    if (key === " ") {
+      if (!e.repeat) dashQueued = true;
+    } else keys.add(key);
+  }
+});
+document.addEventListener("keyup", (e) =>
+  keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key),
+);
+document.querySelectorAll("[data-key]").forEach((button) => {
+  button.onpointerdown = (e) => {
+    e.preventDefault();
+    button.setPointerCapture(e.pointerId);
+    touchKeys.set(e.pointerId, button.dataset.key);
+  };
+  button.onpointerup = button.onpointercancel = (e) =>
+    touchKeys.delete(e.pointerId);
+  button.onlostpointercapture = (e) => touchKeys.delete(e.pointerId);
+});
+$("touch-dash").onpointerdown = (e) => {
+  e.preventDefault();
+  if (mode === "playing") dashQueued = true;
+};
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) pause();
+});
+window.addEventListener("blur", pause);
+canvas.addEventListener("webglcontextlost", (e) => {
+  e.preventDefault();
+  pause();
+  mode = "error";
+  $("pause-menu").hidden = true;
+  $("graphics-error").hidden = false;
+  $("error-message").textContent =
+    "Graphics context was lost. Choose Retry 3D to reload the district.";
+});
+$("reload").onclick = () => location.reload();
+function update() {
+  const titles = ["SCOUT / PASS 01", "SYNC / PASS 02", "ESCAPE / PASS 03"];
+  $("pass-label").textContent =
+    (isReplay ? "REPLAY · " : "") + titles[world.phase];
+  $("mission").textContent = world.vaultOpen
+    ? "Get to the getaway van."
+    : world.phase === 0
+      ? "Steal power. Record a useful route."
+      : world.phase === 1
+        ? "Break both relay shields with your link."
+        : "Open the vault with your crew.";
+  $("time").textContent = String(
+    Math.max(0, Math.ceil((MAX_TICKS - world.total) / HZ)),
+  ).padStart(2, "0");
+  $("loot").textContent = format(world.score);
+  $("armor").textContent = `${world.health} / 6`;
+  $("cells").textContent = `POWER ${Math.min(3, world.cellsTaken)} / 3`;
+  $("relays").textContent = `RELAYS ${world.stats.links} / 2`;
+  $("vault").textContent = world.vaultOpen
+    ? "VAULT OPEN"
+    : world.phase === 2
+      ? `EMP ${Math.min(100, Math.round((world.vaultCharge / 36) * 100))}%`
+      : "VAULT LOCKED";
+  $("dash").textContent = world.player.cooldown
+    ? `DASH ${(world.player.cooldown / HZ).toFixed(1)}s`
+    : "DASH READY";
+  $("objective-copy").textContent = heistObjective(world);
+  $("objective-timer").textContent = world.done
+    ? "MISSION ENDED"
+    : `${world.phase < 2 ? "NEXT ECHO" : "LOCKDOWN"} IN ${Math.ceil((PASS_TICKS - world.tick) / HZ)}s`;
+  $("pass-fill").style.transform =
+    `scaleX(${Math.min(1, world.tick / PASS_TICKS)})`;
+}
+function frame(now) {
+  const frameEvents = [];
+  const elapsed = last ? Math.min((now - last) / 1000, 0.1) : 0;
+  last = now;
+  if (["playing", "replay"].includes(mode)) {
+    if (phaseHold > 0) {
+      phaseHold = Math.max(0, phaseHold - elapsed);
+      accumulator = 0;
+    } else {
+      accumulator += elapsed;
+      while (accumulator >= HSTEP && ["playing", "replay"].includes(mode)) {
+        accumulator -= HSTEP;
+        stepHeist(world, isReplay ? lastRun.inputs[world.total] : action());
+        frameEvents.push(...world.events);
+        processEvents();
+        if (world.done) {
+          finish();
+          break;
+        }
+        if (phaseHold > 0) break;
+      }
+    }
+  } else accumulator = 0;
+  if (mode === "ending") {
+    endDelay -= elapsed;
+    if (endDelay <= 0) showResults();
+  }
+  if (noticeUntil && now > noticeUntil) $("notice").hidden = true;
+  if (view && mode !== "error") {
+    try {
+      view.render(world, now / 1000, effects, frameEvents);
+    } catch (err) {
+      mode = "error";
+      $("graphics-error").hidden = false;
+      $("error-message").textContent = err.message;
+    }
+  }
+  if (["playing", "replay", "paused", "ending", "results"].includes(mode))
+    update();
+  if (now - broadcastAt > 250) {
+    station?.postMessage({
+      kind: "live",
+      game: "heist",
+      state: mode === "replay" ? "watching" : mode,
+      phase: world.phase,
+      score: world.score,
+      seconds: Math.max(0, Math.ceil((MAX_TICKS - world.total) / HZ)),
+      rows: rows(),
+    });
+    broadcastAt = now;
+  }
+  if (
+    (mode === "playing" && Date.now() - lastInput > 20000) ||
+    (["paused", "results"].includes(mode) && Date.now() - lastInput > 60000)
+  )
+    lobby();
+  requestAnimationFrame(frame);
+}
+window.addEventListener("resize", () => view?.resize());
+try {
+  const { createHeistScene } = await import("./heist-scene.js");
+  view = createHeistScene(canvas);
+  view.setQuality(effects);
+  mode = "lobby";
+  $("begin").disabled = false;
+  $("begin").textContent = "Start the heist";
+  $("boot-status").textContent =
+    "District ready. Your first echo arrives in 25 seconds.";
+  requestAnimationFrame(frame);
+} catch (err) {
+  $("brief").hidden = true;
+  $("graphics-error").hidden = false;
+  $("error-message").textContent = err.message;
+}
+if ("serviceWorker" in navigator)
+  navigator.serviceWorker
+    .register("./sw.js")
+    .then(() => navigator.serviceWorker.ready)
+    .then(() => ($("cache-status").textContent = "Offline cache ready"))
+    .catch(() => ($("cache-status").textContent = "Online build"));

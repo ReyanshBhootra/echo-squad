@@ -1,3 +1,15 @@
+# Echo Heist — November 22, 2026 / build 0.6.0
+
+Separate 60Hz mission rules, original locally rendered 3D district, direct keyboard/dash control, recorded echoes, relay links, triangle vault/EMP and escape. Classic engine, model and raw training artifacts are preserved.
+
+Automated: all 30 Node tests pass (23 previous + 7 heist checks). A scripted ordinary-input route completes the mission at tick 3248, score 6515, five armor remaining, two relays and open vault. Replay reconstructs identical score, tick, stats and player state. This route is an integration fixture, not a learned policy or evidence of human enjoyment. Failure boundary, caught termination, immediate stop/normalized diagonals, dash cooldown, crate collision, exact echo samples, degenerate triangles, and replay corruption/truncation/foreign-rule handling are checked. A timeout unit check isolates the final-tick boundary; it is not a full played timeout replay.
+
+Static build packages 42 allowlisted assets; local HTML/module reference resolution checked. Three.js 0.187.0 is pinned by lockfile, served from unchanged vendored modules with MIT license. No CDN or external art assets. No neural retraining; all classic claims remain scoped to classic rules.
+
+Browser-control tools were unavailable in this implementation session. GPU rendering, shader compatibility, audio playback, responsive layout, offline behavior of the enlarged cache, visual quality and perceived input comfort have not been verified for Heist. The earlier browser checks below apply only to classic. Actual newcomer comprehension and enjoyment remain untested. Public deployment status is recorded in outputs/HANDOFF.md after publication; a successful deployment does not establish browser QA.
+
+## Previous classic verification
+
 # First-run guidance and hosting build — November 21, 2026
 
 Build0.5.0 adds first-spark guidance, per-pass countdown/progress, scoring-shape instructions and result insights. Rules/model unchanged. All23 tests pass, including actual collection at the guided target, guide removal after scoring, countdown reset at the600-tick boundary, and distinction between pickup types and pass totals. App/coach/build syntax and whitespace checks passed. Static build copies32 allowlisted runtime assets into dist; no tests, IDE files or historical research snapshots are published as static files.

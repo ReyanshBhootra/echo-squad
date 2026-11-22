@@ -1,6 +1,6 @@
 # ECHO SQUAD
 
-Your past self is your teammate. A 60-second, mouse-driven arcade game with replay teammates, a trained neural rival and an inspectable experiment lab.
+Your getaway crew is you, from twenty-five seconds ago. Echo Heist is a 75-second 3D scout/sync/escape mission. The original 60-second arcade game and its reproducible neural experiment remain available in Classic.
 
 ## Play online
 
@@ -10,7 +10,7 @@ Source and reproducible evidence: https://github.com/ReyanshBhootra/echo-squad. 
 
 ## Run locally
 
-Requires Node.js 22 or later. No packages, accounts, external services, network assets or install step.
+Requires Node.js 22 or later. Vendored Three.js runs locally: no install step, account or CDN is required to play. Rebuilding the vendor files requires `npm ci` and `npm run vendor`; see THIRD_PARTY.md.
 
 ```sh
 npm start
@@ -18,7 +18,21 @@ npm start
 
 Open http://127.0.0.1:4173 in a modern desktop browser. Serve over HTTP, rather than double-clicking index.html: ES modules and offline caching need a suitable origin. The server binds only to this machine. After first load and successful cache installation, the browser can use cached assets without the server; keep the server running for the simplest booth setup. A browser reload, model loading and training-lab rendering were verified with the local server stopped.
 
-## Play
+## Echo Heist — build 0.6.0
+
+Open the home page in a WebGL2-capable browser. WASD/arrows move immediately; Space dashes with a 2.2-second cooldown; Escape pauses. The camera stays fixed. Touch direction/dash buttons are provided, but mobile comfort and GPU performance have not been verified.
+
+- SCOUT, 25 seconds: collect at least three blue power cells and record a useful moving route.
+- SYNC, 25 seconds: your exact first route replays. Sweep your connecting line through both pink relays for 0.3 seconds each to break their shields.
+- ESCAPE, 25 seconds: two earlier routes replay. Surround the gold vault with your squad triangle for 0.6 seconds, then reach the green getaway van.
+
+Security drones mark a target for one second before firing. Keep moving or use dash invulnerability. Six armor hits end the mission; the 75-second active-play clock ends in lockdown. Pass reveals pause the clock briefly. Scores reward cells, relays, the vault and a healthy, fast escape. Watch this run reconstructs your own completed mission; Download replay saves validated inputs and the result. Heist scores use a separate local board and rules version. Classic replay imports and classic model weights do not apply to Heist. The spectator station labels the active mode separately.
+
+The original district contains code-built buildings, palms, vehicles, articulated characters, physical materials, shadows, an environment reflection probe, targeted warning effects, pickup bursts, vault lid/EMP and departure feedback. Effects quiet lowers pixel density and disables shadows/decorative motion; reduced-motion preferences override effects. Sound is opt-in. No Rockstar assets are used. No claim of GTA-scale content or fidelity is made.
+
+Verification includes a winning scripted route using ordinary controls and exact deterministic replay, plus collision, input, failure and import validation tests. This is not a human playtest or trained heist policy. Current browser/GPU tools were unavailable for this release: actual rendering, layout, audio and perceived responsiveness still need a device check. Existing classic browser evidence below applies only to that earlier mode.
+
+## Classic play (`classic.html`)
 
 Build 0.5.0: move the native crosshair inside the arena. It is your player marker; there is no canvas drone chasing behind it. Mouse coordinates feed scoring and replay directly, with no acceleration or drift. Arrow keys/WASD also work. No clicking is needed during play. Touch dragging also steers, but desktop is the primary target.
 
@@ -30,7 +44,7 @@ Targets need two consecutive contact samples to collect, preventing random flick
 
 Vs neural squad runs the trained controller in a separate identical arena. It has its own replay teammates and target collection; its score is shown without adding another moving cursor to your arena. The AI does not steal your targets. Open Spectator on the same browser/origin for a local station display.
 
-## First-run guidance
+## Classic first-run guidance
 
 The first uncollected spark nearest the arena center is marked HOLD HERE until your first pickup. A mission strip explains the current scoring shape, and a pass-progress indicator counts down to each echo or the finish. The mission updates after your first spark, link pickup and gold core. Result screens report link-hit/core counts separately from pass totals and suggest what to try next. These helpers do not change the clock, pickup rules, scoring or saved model results.
 
@@ -38,11 +52,11 @@ The first uncollected spark nearest the arena center is marked HOLD HERE until y
 
 Run `npm run build` to create `dist/`, a static site containing only the runtime assets, selected model and published experiment files. It works on static HTTPS hosting without a server backend. Sites configuration is in `.openai/hosting.json`; the deployed game was made public at the entrant’s request. The local development server still serves port4173.
 
-## After Hours presentation
+## Classic After Hours presentation
 
 Original coastal-night lobby art, a neon court, luminous pickups and team links, brief pickup bursts, score feedback, pass reveals and optional synthesized chimes. **Effects quiet** is available in the header and pause screen; the choice is stored locally, and reduced-motion preferences suppress the added motion. **Sound off** remains the default. The native browser cursor is still the sole mouse marker. The pickup streak counts successive collections within 1.5 seconds; it never multiplies score. The court background is cached separately from moving game objects. Camera motion and mouse-following trails are absent.
 
-## Replay room
+## Classic replay room
 
 After a finished run, choose **Watch this run**. The routes open in the same tab, paused. Replay room is also linked beneath the arena: import a downloaded JSON replay or choose **Open neural example**. Play/pause, ½×/1×/2× speed, pass jumps and a frame-accurate timeline let you inspect the run. Imported routes are validated and their scores recalculated before playback; incompatible rules, incomplete routes and score mismatches are rejected. Files stay on this device. This is consistency checking, not authentication or anti-cheat.
 
@@ -59,6 +73,7 @@ Training regenerates model files and experiment artifacts deterministically, apa
 
 ## Source map
 
+- src/heist-sim.js / heist-scene.js / heist-app.js: separate 60Hz heist rules, Three.js district and mission lifecycle.
 - src/sim.js: shared deterministic simulation and scripted controllers.
 - src/neural.js: 16 → 32 → 2 target-preference network, inference and SGD backpropagation.
 - scripts/train.mjs: synthetic examples, three independent runs, validation selection, held-out evaluation.

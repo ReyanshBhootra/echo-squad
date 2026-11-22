@@ -1,3 +1,23 @@
+# Echo Heist recording plan — target 2:40
+
+This is a plan, not a finished video. Capture actual current gameplay; do not use rendered mockups as evidence. No recording or YouTube upload has occurred.
+
+| Time | Footage | Point |
+| --- | --- | --- |
+| 0:00–0:10 | Actual vault crack, triangle and van escape, then title | Your whole crew is your own past moves. |
+| 0:10–0:30 | Start; movement, power cells, drone warning and dash | One player, 75 active seconds, direct controls. |
+| 0:30–0:55 | Echo reveal and actual relay breaks | The first route becomes a teammate; your connecting line breaks shields. Clearly caption any time cut. |
+| 0:55–1:20 | Full crew, triangle charge, EMP and exit | Prior routes change what is possible now. Show a real successful mission. |
+| 1:20–1:35 | Result, own-run replay and export | Replays reconstruct the rules and result; local station scores. |
+| 1:35–1:58 | Explicitly switch to CLASSIC + NEURAL LAB; charts and raw data | The separate classic experiment trained a 610-parameter target selector on 28,800 synthetic examples. It is not the heist opponent. |
+| 1:58–2:15 | Failed experiments and evidence audit | Explain the stable-contact discovery without inflating it into a research breakthrough. |
+| 2:15–2:28 | Actual saved PyCharm audit screenshot; exact scope caption | PyCharm audited Experiment 001; most work used Codex and CLI. No Junie/Air claim. |
+| 2:28–2:40 | Quiet effects, station board, real escape and URLs | One player. A whole crew. |
+
+Before recording, verify the current district on actual hardware, get real newcomer comfort/comprehension feedback, and confirm an ordinary player can complete the mission. Keep the final video under three minutes; use original sound or silence. Refer to SUBMISSION.md for remaining entrant actions.
+
+## Earlier classic-only recording plan (historical)
+
 # Demo production sheet — target 2:40
 
 This is a recording plan and narration draft, not a finished video. Record actual functioning gameplay. Use the original game sound or silence, not licensed music. Avoid other apps, account details and browser bookmarks in the footage.

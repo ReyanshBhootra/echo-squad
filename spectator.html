@@ -109,13 +109,14 @@
       </div>
       <div class="big-score" id="live-score">00000</div>
     </section>
-    <h3>TODAY'S LOCAL BOARD</h3>
+    <h3 id="board-label">TODAY'S LOCAL BOARD / CLASSIC</h3>
     <ol id="board"></ol>
     <p id="connection">Connecting to arena…</p>
     <script type="module">
       import { loadScores, localDate } from "./src/storage.js";
       const $ = (id) => document.getElementById(id);
-      let last = 0;
+      let last = 0,
+        heist = false;
       function board(rows) {
         $("board").replaceChildren();
         rows
@@ -147,25 +148,32 @@
         bc.onmessage = ({ data: d }) => {
           last = Date.now();
           if (d.kind === "live") {
+            heist = d.game === "heist";
+            $("board-label").textContent =
+              `TODAY'S LOCAL BOARD / ${heist ? "ECHO HEIST" : "CLASSIC"}`;
             $("live-label").textContent =
               d.state === "playing"
                 ? "CHALLENGER IN THE ARENA"
                 : d.state === "watching"
-                  ? "NEURAL MODEL DEMONSTRATION"
+                  ? heist
+                    ? "RECORDED HEIST"
+                    : "NEURAL MODEL DEMONSTRATION"
                   : d.state === "results"
                     ? "RUN COMPLETE"
                     : "ARENA READY";
-            $("live-title").textContent = [
-              "Solo.",
-              "Make the connection.",
-              "Full squad.",
-            ][Math.min(2, d.phase)];
+            $("live-title").textContent = (
+              heist
+                ? ["Scout.", "Sync.", "Escape."]
+                : ["Solo.", "Make the connection.", "Full squad."]
+            )[Math.min(2, d.phase)];
             $("live-score").textContent = String(d.score).padStart(5, "0");
             $("remaining").textContent = `${d.seconds} SECONDS REMAINING`;
           }
           if (d.rows) board(d.rows);
         };
-      window.addEventListener("storage", () => board(loadScores()));
+      window.addEventListener("storage", () => {
+        if (!heist) board(loadScores());
+      });
       setInterval(() => {
         $("connection").textContent =
           Date.now() - last < 2000

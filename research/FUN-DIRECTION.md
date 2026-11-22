@@ -1,3 +1,5 @@
+> November 22 implementation update: user approved Echo Heist. Build 0.6.0 implements the original 3D mission, its own rules/replay and a winning scripted control path. Browser/GPU and human enjoyment checks remain pending. The research below motivated a direction; it does not establish player preference for this implementation or a chance of winning.
+
 # Fun and graphics direction — November 22, 2026
 
 Status: researched recommendation, not an implemented or deployed game mode. Public build remains 0.5.0. The entrant finds the game boring despite accepting the After Hours visual direction as closer. Treat gameplay enjoyment as unresolved; do not call it finished solely because the code and hosting work.

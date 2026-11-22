@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101625" />
+    <meta
+      name="description"
+      content="One player. Three chances. Record your own crew, crack the vault and escape a 75-second 3D heist."
+    />
+    <title>ECHO SQUAD — Echo Heist</title>
+    <link rel="icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./heist.css" />
+  </head>
+  <body>
+    <canvas
+      id="district"
+      tabindex="0"
+      aria-label="3D heist district. Move with WASD or arrow keys. Space dashes. Escape pauses."
+    ></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <header class="topbar">
+      <a href="./" class="brand"
+        >ECHO <span>SQUAD</span><small>AFTER HOURS</small></a
+      >
+      <div class="tools">
+        <button id="quality" aria-pressed="true">Effects on</button
+        ><button id="audio" aria-pressed="false">Sound off</button
+        ><a href="./classic.html">Classic + neural lab</a>
+      </div>
+    </header>
+    <main>
+      <section id="brief" class="panel brief" aria-labelledby="heist-title">
+        <p class="eyebrow">ONE PLAYER. THREE CHANCES.</p>
+        <h1 id="heist-title">ECHO<br /><em>HEIST.</em></h1>
+        <p class="tagline">
+          Your getaway crew is you.<br />From twenty-five seconds ago.
+        </p>
+        <ol class="brief-steps">
+          <li><b>SCOUT</b> Steal power. Record your route.</li>
+          <li><b>SYNC</b> Link with your echo. Break the relays.</li>
+          <li><b>ESCAPE</b> Surround the vault. Get out alive.</li>
+        </ol>
+        <button id="begin" class="primary" disabled>
+          Loading the district…
+        </button>
+        <p class="controls">
+          WASD / ARROWS <span>MOVE</span> &nbsp; SPACE <span>DASH</span><br />75
+          seconds of active play · fixed camera
+        </p>
+        <p id="boot-status" role="status">Preparing original 3D scene…</p>
+        <a class="quiet-link" href="./classic.html"
+          >Play the classic mouse game</a
+        >
+      </section>
+      <section id="hud" class="hud" aria-label="Mission status" hidden>
+        <div class="phase-label">
+          <small id="pass-label">SCOUT / PASS 01</small
+          ><strong id="mission">Collect 3 power cells.</strong>
+        </div>
+        <div class="stats">
+          <div><small>LOCKDOWN</small><b id="time">75</b></div>
+          <div><small>LOOT</small><b id="loot">0</b></div>
+          <div><small>ARMOR</small><b id="armor">6 / 6</b></div>
+        </div>
+        <div class="mission-progress"><span id="pass-fill"></span></div>
+      </section>
+      <div id="objective" class="objective" hidden>
+        <span id="objective-copy"></span><b id="objective-timer"></b>
+      </div>
+      <aside id="loadout" class="loadout" hidden>
+        <span id="cells">POWER 0 / 3</span><span id="relays">RELAYS 0 / 2</span
+        ><span id="vault">VAULT LOCKED</span><span id="dash">DASH READY</span
+        ><button id="pause">Pause</button>
+      </aside>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section
+        id="pause-menu"
+        class="panel modal"
+        aria-labelledby="pause-title"
+        hidden
+      >
+        <p class="eyebrow">THE CLOCK CAN WAIT</p>
+        <h2 id="pause-title">Take a breath.</h2>
+        <p>Your route and mission are paused.</p>
+        <button id="resume" class="primary">Resume mission</button
+        ><button id="pause-quality">Switch to quiet effects</button
+        ><button id="quit">End this mission</button>
+      </section>
+      <section
+        id="end"
+        class="panel modal end"
+        aria-labelledby="end-title"
+        hidden
+      >
+        <p class="eyebrow" id="end-label">MISSION COMPLETE</p>
+        <h2 id="end-title">Crew clear.</h2>
+        <strong class="end-score" id="end-score">0</strong>
+        <p id="end-summary"></p>
+        <p id="end-tip" class="end-tip"></p>
+        <form id="record-form">
+          <label for="callsign">Leave your callsign on this station</label>
+          <div class="form-row">
+            <input
+              id="callsign"
+              maxlength="18"
+              required
+              autocomplete="off"
+              placeholder="Your callsign"
+            /><button type="submit">Save score</button>
+          </div>
+        </form>
+        <p id="save-status" role="status"></p>
+        <div class="end-actions">
+          <button id="retry" class="primary">One more heist</button
+          ><button id="watch">Watch this run</button
+          ><button id="export">Download replay</button
+          ><button id="lobby">Back to district</button>
+        </div>
+      </section>
+      <section id="graphics-error" class="panel modal" hidden>
+        <h2>The district couldn’t start.</h2>
+        <p id="error-message"></p>
+        <p>
+          Echo Heist needs WebGL2 in a modern browser. The classic game is still
+          available.
+        </p>
+        <a class="primary" href="./classic.html">Open classic mode</a
+        ><button id="reload">Retry 3D</button>
+      </section>
+    </main>
+    <div id="touch-controls" class="touch-controls" hidden>
+      <div class="dpad">
+        <button data-key="ArrowUp" aria-label="Move forward">▲</button
+        ><button data-key="ArrowLeft" aria-label="Move left">◀</button
+        ><button data-key="ArrowDown" aria-label="Move back">▼</button
+        ><button data-key="ArrowRight" aria-label="Move right">▶</button>
+      </div>
+      <button id="touch-dash">DASH</button>
+    </div>
+    <footer id="lobby-footer">
+      <span>ORIGINAL DISTRICT / BUILD 0.6.0</span
+      ><button id="spectator">Spectator station</button
+      ><a
+        href="https://github.com/ReyanshBhootra/echo-squad"
+        target="_blank"
+        rel="noopener"
+        >Source + evidence</a
+      ><span id="cache-status">Local-first station</span>
+    </footer>
+    <script type="module" src="./src/heist-app.js"></script>
+  </body>
+</html>

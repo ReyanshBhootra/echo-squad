@@ -1,3 +1,13 @@
+# Current direction — Echo Heist, build 0.6.0
+
+Approved by the user on November 22. One original 3D coastal-night district, one complete scout/sync/escape mission. Preserve ECHO SQUAD’s recorded-self teamwork: cells use points, relay shields use links, the vault uses a triangle. The new mission is separate from the classic simulator and ML benchmark. Nothing claims that classic weights learned heist mechanics.
+
+Fixed raised perspective, instant WASD/arrows and dash remove mouse chasing. Cyan player, pink echo/relays and gold echo/vault retain meaning. Security marks intended shots before firing; physical cover and a dash offer responses. Success opens a real vault mesh, triggers an expanding EMP, activates the green van and ends with departure feedback. Local bursts attach to actual game events; no camera shake or motion blur. Procedural district meshes and textures are original, Three.js MIT code is vendored with attribution.
+
+Quiet effects reduce GPU work and decorative animation; sound is opt-in. Native system fonts and local assets avoid CDN dependence. The full mission is tested through real control inputs and exact replay. Device rendering, performance, readability, comprehension and enjoyment remain unverified for this new mode. Need actual user feedback before claiming comfort or fun. The classic game and experiment artifacts remain accessible.
+
+## Previous classic design
+
 # Current direction — AFTER HOURS, build 0.5.0
 
 The user rejected the earlier restrained presentation as boring for a game and named GTA VI as a visual reference. Current direction: original coastal-night arcade identity, cream display type, near-black plum/asphalt, cyan player, hot-pink first echo/diamonds and warm-gold second echo/cores. Original SVG city, sunset, palms and car illustration is drawn in assets/after-hours.svg; no Rockstar imagery or logos are included. Official reference reviewed: https://www.rockstargames.com/VI . This is visual inspiration, not a claim of an open-world game or Rockstar affiliation.
