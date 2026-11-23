@@ -6,7 +6,7 @@ import {
   linkDistance,
   blocked,
 } from "../../src/heist-sim.js";
-export function scriptedHeist(seed = 9019, rules) {
+export function scriptedHeist(seed = 9019, rules, stopAtVault = false) {
   const s = createHeist(seed, rules);
   let waypoint = 0,
     anchored = false;
@@ -71,6 +71,7 @@ export function scriptedHeist(seed = 9019, rules) {
     dx /= Math.max(1, length);
     dz /= Math.max(1, length);
     stepHeist(s, { x: dx, z: dz, dash: s.player.cooldown === 0 && length > 3 });
+    if (stopAtVault && s.vaultOpen) break;
   }
   return s;
 }

@@ -1,6 +1,9 @@
 // Echo Heist has its own rules. Classic experiment weights do not control it.
-export const HEIST_RULES = "echo-heist-2";
+export const HEIST_RULES = "echo-heist-3";
+export const CASH_HEIST_RULES = "echo-heist-2";
 export const LEGACY_HEIST_RULES = "echo-heist-1";
+const SUPPORTED_RULES = [HEIST_RULES, CASH_HEIST_RULES, LEGACY_HEIST_RULES];
+export const CHASE_TICKS = 9 * 60;
 export const LOOT_RESPAWN_TICKS = 6 * 60;
 export const HZ = 60,
   HSTEP = 1 / HZ,
@@ -60,8 +63,7 @@ const CASH_SPOTS = [
   [6, -2],
 ];
 export function createHeist(seed = 9019, rules = HEIST_RULES) {
-  if (![HEIST_RULES, LEGACY_HEIST_RULES].includes(rules))
-    throw Error("Unsupported heist rules.");
+  if (!SUPPORTED_RULES.includes(rules)) throw Error("Unsupported heist rules.");
   // Fixed mission layout makes route planning learnable; seed offsets patrol timing.
   return {
     rules,
@@ -72,7 +74,7 @@ export function createHeist(seed = 9019, rules = HEIST_RULES) {
     score: 0,
     health: 6,
     loot:
-      rules === HEIST_RULES
+      rules !== LEGACY_HEIST_RULES
         ? CASH_SPOTS.slice(0, 8).map(([x, z], id) => ({
             id,
             x,
@@ -85,6 +87,8 @@ export function createHeist(seed = 9019, rules = HEIST_RULES) {
         : [],
     lootTaken: 0,
     lootCash: 0,
+    crewCash: [0, 0, 0],
+    escapeDeadline: null,
     player: {
       ...START,
       heading: Math.PI,
@@ -160,11 +164,18 @@ function move(s, action) {
   p.dash = Math.max(0, p.dash - 1);
 }
 function security(s) {
+  const chase = s.escapeDeadline !== null;
   for (const d of s.drones) {
     const time = s.total / HZ,
       base = (d.id - 1) * 11;
-    d.x = clamp(base + Math.sin(time * 0.38 + d.id) * 3, -16, 16);
-    d.z = -7 + Math.cos(time * 0.3 + d.id) * 2;
+    if (d.pursuit) {
+      const distance = Math.max(1, dist(d, s.player));
+      d.x += ((s.player.x - d.x) / distance) * 3.8 * HSTEP;
+      d.z += ((s.player.z - d.z) / distance) * 3.8 * HSTEP;
+    } else {
+      d.x = clamp(base + Math.sin(time * 0.38 + d.id) * 3, -16, 16);
+      d.z = -7 + Math.cos(time * 0.3 + d.id) * 2;
+    }
     if (d.stun > 0) {
       d.stun--;
       continue;
@@ -176,21 +187,21 @@ function security(s) {
         s.shots.push({
           x: d.x,
           z: d.z,
-          vx: ((d.aim.x - d.x) / len) * 6,
-          vz: ((d.aim.z - d.z) / len) * 6,
+          vx: ((d.aim.x - d.x) / len) * (chase ? 9 : 6),
+          vz: ((d.aim.z - d.z) / len) * (chase ? 9 : 6),
           life: 240,
         });
         s.events.push({ type: "shot", x: d.x, z: d.z });
         d.aim = null;
       }
     } else if (s.total >= d.next) {
-      const targets = [s.player, ...s.ghosts];
+      const targets = chase ? [s.player] : [s.player, ...s.ghosts];
       const target = targets.reduce((a, b) =>
         dist(d, a) < dist(d, b) ? a : b,
       );
       d.aim = { x: target.x, z: target.z };
-      d.windup = 60;
-      d.next = s.total + [260, 220, 180][s.phase];
+      d.windup = chase ? 42 : 60;
+      d.next = s.total + (chase ? 110 : [260, 220, 180][s.phase]);
     }
   }
   for (const shot of s.shots) {
@@ -235,14 +246,22 @@ function objectives(s) {
         bag.taken = false;
       }
     }
-    if (!bag.taken && crew.some((p) => dist(bag, p) < 1.1)) {
+    const collector = crew.findIndex((p) => dist(bag, p) < 1.1);
+    if (!bag.taken && collector !== -1) {
       bag.taken = true;
       bag.ready = s.total + LOOT_RESPAWN_TICKS;
       bag.generation++;
       s.score += bag.value;
       s.lootTaken++;
       s.lootCash += bag.value;
-      s.events.push({ type: "cash", x: bag.x, z: bag.z, points: bag.value });
+      s.crewCash[collector] += bag.value;
+      s.events.push({
+        type: "cash",
+        x: bag.x,
+        z: bag.z,
+        points: bag.value,
+        actor: collector,
+      });
     }
   }
   for (const cell of s.cells)
@@ -284,9 +303,28 @@ function objectives(s) {
       s.shots = [];
       s.events.push({ type: "vault", ...VAULT, points: 1200 });
       for (const d of s.drones) {
-        d.stun = 240;
+        d.stun = s.rules === HEIST_RULES ? 45 : 240;
         d.aim = null;
         d.windup = 0;
+        if (s.rules === HEIST_RULES) d.next = s.total + 60;
+      }
+      if (s.rules === HEIST_RULES) {
+        s.escapeDeadline = Math.min(MAX_TICKS, s.total + CHASE_TICKS);
+        for (const [id, x, z] of [
+          [3, 16, 5],
+          [4, 7, 11],
+        ])
+          s.drones.push({
+            id,
+            x,
+            z,
+            pursuit: true,
+            aim: null,
+            windup: 0,
+            next: s.total + 18 + (id - 3) * 22,
+            stun: 0,
+          });
+        s.events.push({ type: "alarm", ...VAULT });
       }
     }
   }
@@ -324,6 +362,11 @@ export function stepHeist(s, action = {}) {
     s.done = true;
     s.outcome = "caught";
   }
+  if (!s.done && s.escapeDeadline !== null && s.total >= s.escapeDeadline) {
+    s.done = true;
+    s.outcome = "van-left";
+    s.events.push({ type: "van-left", ...EXIT });
+  }
   if (!s.done && s.tick === PASS_TICKS) {
     if (s.phase === 2) {
       s.done = true;
@@ -358,7 +401,9 @@ export function heistObjective(s) {
       ? "Crew clear. Heist complete."
       : s.outcome === "caught"
         ? "Security caught you. Your next route can change the outcome."
-        : "Lockdown. Plan wider routes for your next crew.";
+        : s.outcome === "van-left"
+          ? "The van left. Save a dash for the alarm and follow the green route."
+          : "Lockdown. Plan wider routes for your next crew.";
   if (s.cellsTaken < 3)
     return `Grab ${3 - s.cellsTaken} more blue keycards to unlock the relay job. Green bags add cash.`;
   if (s.phase === 0)
@@ -369,7 +414,9 @@ export function heistObjective(s) {
     return "Relays down. Grab more cash on the opposite side to record a wider crew.";
   if (!s.vaultOpen)
     return "Keep the gold vault INSIDE your squad triangle to charge the EMP.";
-  return "Vault cracked! Reach the green getaway van before lockdown.";
+  return s.escapeDeadline === null
+    ? "Vault cracked! Reach the green getaway van before lockdown."
+    : "ALARM! Follow the green route. Dash past pursuit drones to the van.";
 }
 export function exportHeist(s) {
   if (!s.done) throw Error("Finish the mission before exporting.");
@@ -386,7 +433,7 @@ export function replayHeist(data) {
   if (
     !data ||
     data.schema !== 1 ||
-    ![HEIST_RULES, LEGACY_HEIST_RULES].includes(data.rules) ||
+    !SUPPORTED_RULES.includes(data.rules) ||
     !Number.isInteger(data.seed) ||
     !Array.isArray(data.inputs) ||
     data.inputs.length < 1 ||

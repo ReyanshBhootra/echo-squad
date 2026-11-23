@@ -18,7 +18,19 @@ npm start
 
 Open http://127.0.0.1:4173 in a modern desktop browser. Serve over HTTP, rather than double-clicking index.html: ES modules and offline caching need a suitable origin. The server binds only to this machine. After first load and successful cache installation, the browser can use cached assets without the server; keep the server running for the simplest booth setup. A browser reload, model loading and training-lab rendering were verified with the local server stopped.
 
-## Cash Job update — build 0.7.0
+## Getaway update — build 0.8.0
+
+Opening the vault starts an alarm and a getaway deadline: nine active seconds, capped by the remaining lockdown time. Two pursuit drones arrive near the exit, follow the player and fire faster telegraphed shots. The original guards recover from the EMP after 0.75 seconds; pursuit shots are aimed at the player. Escape still awards the ordinary getaway bonus. Miss the window and the result is “The van left,” even if armor remains. Pausing freezes the simulation deadline.
+
+A green ground route and chevrons lead to the van and bend around cover; the radar shows the same route and pursuers. The alarm has a static red countdown, red beacon lighting, and visible pursuit search cones. Quiet effects remove the decorative cones and keep essential targeting warnings. A synthesized two-tone alarm plays only with sound enabled; sound remains off by default. No moving camera or screen flash was added.
+
+Cash events now identify their actual collector. The crew feed names YOU, ECHO 01 or ECHO 02; echo pickups have attributed floating rewards. Echo earnings and the results summary show cash-bag value actually collected by recorded teammates. A pickup pays once, with player-first tie breaking if crew overlap. This does not double-count the score.
+
+Three original low storefronts—NIGHT OWL, 24 / 7 and BAY AUTO—add readable landmarks along the north edge, with lit canopies, crossing/loading/parking paint, brighter ambient light and stronger exposure. These are code-built original assets. Browser rendering, audio, layout, performance and enjoyment remain unverified because browser-control tools are unavailable.
+
+Rules are now echo-heist-3; both older heist rules retain exact replay compatibility and separate score storage. Classic neural artifacts remain unchanged. Tests cover winning and missed-van runs, reinforcement spawning/firing, attribution, paths around crates and exact replay, including the previous rule results.
+
+## Previous Cash Job update — build 0.7.0
 
 There are now green duffel bags worth $100 or $250 throughout the district. Collected bags replenish after six active seconds at a different free location away from the crew. Higher-value bags sit near the northern security patrol. Echoes collect bags too. All pickup value is added to the visible cash counter with local +$ feedback. The $10,000 target is an optional score challenge; escaping still completes the mission below that target. Pickup, relay, vault, armor/time and escape rewards use the same score total displayed as fictional heist cash.
 

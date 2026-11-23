@@ -1,5 +1,6 @@
 import * as T from "../assets/vendor/three.module.js";
 import { BLOCKS, EXIT, VAULT } from "./heist-sim.js";
+import { escapeRoute } from "./heist-guide.js";
 
 const COLORS = [0x7cecf4, 0xff83ab, 0xffd18e];
 const UP = new T.Vector3(0, 1, 0);
@@ -14,12 +15,12 @@ export function createHeistScene(canvas) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = T.PCFSoftShadowMap;
   renderer.toneMapping = T.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
+  renderer.toneMappingExposure = 1.25;
   const scene = new T.Scene();
   scene.background = new T.Color(0x101627);
   scene.fog = new T.FogExp2(0x172139, 0.011);
   const camera = new T.PerspectiveCamera(44, 1, 0.1, 180);
-  scene.add(new T.HemisphereLight(0xbacfff, 0x4b273d, 2));
+  scene.add(new T.HemisphereLight(0xbacfff, 0x4b273d, 2.5));
   const sun = new T.DirectionalLight(0xffc294, 3.5);
   sun.position.set(-18, 28, 12);
   sun.castShadow = true;
@@ -188,6 +189,34 @@ export function createHeistScene(canvas) {
     );
   }
   // Original storefronts, roof equipment, windows and shallow balconies.
+  // Low storefronts sit outside the collision boundary, close enough to read.
+  for (const [x, name, color] of [
+    [-10, "NIGHT OWL", 0xffc684],
+    [0, "24 / 7", 0x86f7d3],
+    [10, "BAY AUTO", 0xff89b2],
+  ]) {
+    const shop = new T.Group();
+    shop.position.set(x, 0, -14);
+    scene.add(shop);
+    box(shop, 6, 3.6, 2, 0, 1.8, 0, 0x656b70, 0.1, 0.85);
+    box(shop, 5.5, 1.7, 0.05, 0, 1.2, 1.03, 0x132f3b, 0.65, 0.18);
+    for (const side of [-1, 1])
+      box(shop, 0.1, 1.9, 0.09, side * 1.7, 1.2, 1.08, 0x9aa59f);
+    box(shop, 6.3, 0.2, 1.2, 0, 2.4, 1.35, color, 0.2, 0.55);
+    sign(shop, name, 4.8, 0, 3.04, 1.04, color);
+    const strip = box(shop, 5.5, 0.08, 0.08, 0, 2.28, 1.8, color);
+    strip.material = glow(color);
+  }
+  // Crossing, parking bays, loading hatch and curb paint add street context.
+  for (let x = -16; x < -11; x += 0.8)
+    box(scene, 0.4, 0.025, 3.2, x, 0.025, 8.2, 0xc9c9b3);
+  for (const x of [-16, 16])
+    for (let z = -10; z < 11; z += 4)
+      box(scene, 0.12, 0.025, 2.6, x, 0.025, z, 0xa5a99e);
+  for (let x = 10; x < 17; x += 1) {
+    const stripe = box(scene, 0.11, 0.025, 2.1, x, 0.025, 10.8, 0xceb46f);
+    stripe.rotation.y = -0.5;
+  }
   const skyline = [
     [-25, -11, 8, 11, 8],
     [-25, 1, 7, 8, 8],
@@ -446,7 +475,7 @@ export function createHeistScene(canvas) {
     }),
   );
   scene.add(triangle);
-  const drones = Array.from({ length: 3 }, () => {
+  const drones = Array.from({ length: 5 }, () => {
     const g = new T.Group();
     scene.add(g);
     const body = cylinder(g, 0.5, 0.25, 0, 0, 0, 0x3d4e64);
@@ -470,7 +499,62 @@ export function createHeistScene(canvas) {
       }),
     );
     scene.add(line);
-    return { g, rotors, warning, line };
+    const search = new T.Mesh(
+      new T.ConeGeometry(1.05, 1, 16, 1, true),
+      new T.MeshBasicMaterial({
+        color: 0xff5c45,
+        transparent: true,
+        opacity: 0.1,
+        depthWrite: false,
+        side: T.DoubleSide,
+      }),
+    );
+    scene.add(search);
+    search.visible = false;
+    return { g, rotors, warning, line, search };
+  });
+  const alarmLights = [-17, 17].map((x) => {
+    const pole = cylinder(scene, 0.1, 3.8, x, 1.9, 6, 0x53635f);
+    const cap = box(scene, 0.45, 0.3, 0.45, x, 3.9, 6, 0xff6252);
+    cap.material = glow(0x69483f);
+    const light = new T.PointLight(0xff4338, 0, 16, 2);
+    light.position.set(x, 3.6, 6);
+    scene.add(light);
+    return { cap, light };
+  });
+  // A route painted in light follows the runner without moving the camera.
+  const routeGeometry = new T.BufferGeometry();
+  routeGeometry.setAttribute(
+    "position",
+    new T.BufferAttribute(new Float32Array(18 * 3), 3),
+  );
+  routeGeometry.setAttribute(
+    "lineDistance",
+    new T.BufferAttribute(new Float32Array(18), 1),
+  );
+  const route = new T.Line(
+    routeGeometry,
+    new T.LineDashedMaterial({
+      color: 0xafff92,
+      dashSize: 0.6,
+      gapSize: 0.4,
+      transparent: true,
+      opacity: 0.85,
+    }),
+  );
+  route.frustumCulled = false;
+  scene.add(route);
+  const routeArrows = Array.from({ length: 8 }, () => {
+    const shape = new T.Shape();
+    shape.moveTo(-0.35, -0.35);
+    shape.lineTo(0, 0.4);
+    shape.lineTo(0.35, -0.35);
+    shape.lineTo(0, -0.12);
+    shape.closePath();
+    const arrow = new T.Mesh(new T.ShapeGeometry(shape), glow(0xafff92));
+    arrow.rotation.x = -Math.PI / 2;
+    scene.add(arrow);
+    return arrow;
   });
   const bulletGeometry = new T.SphereGeometry(0.16, 8, 6),
     bulletMaterial = glow(0xff665e);
@@ -608,7 +692,57 @@ export function createHeistScene(canvas) {
     treasure.visible = s.vaultOpen;
     goldRing.material = glow(s.vaultOpen ? 0x89ffba : COLORS[2]);
     exitRing.material = glow(s.exitOpen ? 0x89ffba : 0x506b6b);
-    if (s.outcome === "escaped" && finishTime === null) finishTime = time;
+    const alarm = s.escapeDeadline !== null;
+    const chasing = alarm && !s.done;
+    alarmLights.forEach(({ cap, light }) => {
+      cap.material = glow(chasing ? 0xff6252 : 0x69483f);
+      light.intensity = chasing ? 32 : 0;
+    });
+    route.visible = chasing;
+    const path = chasing ? escapeRoute(s.player) : [];
+    if (chasing) {
+      const position = route.geometry.attributes.position,
+        distances = route.geometry.attributes.lineDistance;
+      let total = 0;
+      path.forEach((p, i) => {
+        if (i) total += Math.hypot(p.x - path[i - 1].x, p.z - path[i - 1].z);
+        position.setXYZ(i, p.x, 0.12, p.z);
+        distances.setX(i, total);
+      });
+      position.needsUpdate = true;
+      distances.needsUpdate = true;
+      route.geometry.setDrawRange(0, path.length);
+    }
+    const segments = path.slice(1).map((p, i) => ({
+        from: path[i],
+        to: p,
+        length: Math.hypot(p.x - path[i].x, p.z - path[i].z),
+      })),
+      distance = segments.reduce((sum, s) => sum + s.length, 0);
+    routeArrows.forEach((a, i) => {
+      a.visible = chasing && distance > 2;
+      if (!a.visible) return;
+      let along = (distance * (i + 1)) / 9;
+      let segment = segments[segments.length - 1];
+      for (const candidate of segments) {
+        segment = candidate;
+        if (along <= segment.length) break;
+        along -= segment.length;
+      }
+      const f = along / Math.max(0.001, segment.length),
+        angle = Math.atan2(
+          segment.to.x - segment.from.x,
+          segment.to.z - segment.from.z,
+        );
+      a.position.set(
+        segment.from.x + (segment.to.x - segment.from.x) * f,
+        0.13,
+        segment.from.z + (segment.to.z - segment.from.z) * f,
+      );
+      a.rotation.set(-Math.PI / 2, 0, angle - Math.PI);
+    });
+    if (["escaped", "van-left"].includes(s.outcome) && finishTime === null)
+      finishTime = time;
     van.position.x =
       EXIT.x +
       (finishTime !== null && effects
@@ -638,6 +772,11 @@ export function createHeistScene(canvas) {
     }
     drones.forEach((mesh, i) => {
       const d = s.drones[i];
+      mesh.g.visible = !!d;
+      mesh.warning.visible = false;
+      mesh.line.visible = false;
+      mesh.search.visible = false;
+      if (!d) return;
       mesh.g.position.set(
         d.x,
         2.7 + (effects ? Math.sin(time * 2 + i) * 0.08 : 0),
@@ -647,15 +786,28 @@ export function createHeistScene(canvas) {
       mesh.rotors.forEach(
         (rotor) => (rotor.rotation.y = effects ? time * 32 : 0),
       );
-      mesh.warning.visible = !!d.aim && d.stun === 0;
+      mesh.warning.visible = !s.done && !!d.aim && d.stun === 0;
       mesh.line.visible = mesh.warning.visible;
       if (d.aim) {
         mesh.warning.position.set(d.aim.x, 0.07, d.aim.z);
-        mesh.warning.scale.setScalar(0.6 + ((60 - d.windup) / 60) * 0.7);
+        const windup = alarm ? 42 : 60;
+        mesh.warning.scale.setScalar(
+          0.6 + ((windup - d.windup) / windup) * 0.7,
+        );
         mesh.line.geometry.setFromPoints([
           new T.Vector3(d.x, 2.7, d.z),
           new T.Vector3(d.aim.x, 0.1, d.aim.z),
         ]);
+      }
+      if (chasing && d.pursuit && effects) {
+        const target = d.aim || s.player,
+          from = new T.Vector3(d.x, 2.7, d.z),
+          to = new T.Vector3(target.x, 0.08, target.z),
+          direction = from.clone().sub(to);
+        mesh.search.visible = true;
+        mesh.search.position.copy(from).add(to).multiplyScalar(0.5);
+        mesh.search.scale.y = direction.length();
+        mesh.search.quaternion.setFromUnitVectors(UP, direction.normalize());
       }
     });
     bullets.forEach((b, i) => {

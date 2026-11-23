@@ -11,8 +11,14 @@ import {
   surrounds,
   LEGACY_HEIST_RULES,
   LOOT_RESPAWN_TICKS,
+  CASH_HEIST_RULES,
+  CHASE_TICKS,
 } from "../src/heist-sim.js";
-import { missionTarget } from "../src/heist-guide.js";
+import {
+  missionTarget,
+  escapeRoute,
+  clearEscapeSegment,
+} from "../src/heist-guide.js";
 import { scriptedHeist } from "./fixtures/heist-route.mjs";
 
 test("full heist is winnable through controls and replays exactly", () => {
@@ -27,6 +33,8 @@ test("full heist is winnable through controls and replays exactly", () => {
   assert.deepEqual(replay.stats, s.stats);
   assert.deepEqual(replay.player, s.player);
   assert.equal(replay.score, s.score);
+  assert.deepEqual(replay.crewCash, s.crewCash);
+  assert.equal(replay.escapeDeadline, s.escapeDeadline);
 });
 
 test("replay rejects tampering, truncation, extra controls and foreign rules", () => {
@@ -152,7 +160,9 @@ test("a recorded echo can earn real cash for the crew", () => {
   assert.ok(bag.taken);
   assert.equal(s.lootTaken, 1);
   assert.equal(s.lootCash, bag.value);
+  assert.deepEqual(s.crewCash, [0, bag.value, 0]);
   assert.ok(s.events.some((e) => e.type === "cash" && e.points === bag.value));
+  assert.equal(s.events.find((e) => e.type === "cash").actor, 1);
 });
 
 test("old heist replays preserve their original result after the loot update", () => {
@@ -161,6 +171,75 @@ test("old heist replays preserve their original result after the loot update", (
   assert.equal(s.total, 3248);
   assert.equal(s.lootTaken, 0);
   assert.equal(replayHeist(exportHeist(s)).score, 6515);
+  const cashRun = scriptedHeist(9019, CASH_HEIST_RULES);
+  assert.equal(cashRun.score, 6865);
+  assert.equal(cashRun.escapeDeadline, null);
+  assert.equal(replayHeist(exportHeist(cashRun)).score, 6865);
+});
+
+test("vault triggers one timed pursuit with faster telegraphed shots", () => {
+  const s = scriptedHeist(9019, undefined, true);
+  assert.equal(s.escapeDeadline, s.total - 1 + CHASE_TICKS);
+  assert.equal(s.drones.length, 5);
+  assert.equal(s.drones.filter((d) => d.pursuit).length, 2);
+  assert.ok(s.events.some((e) => e.type === "alarm"));
+  const before = { x: s.drones[3].x, z: s.drones[3].z };
+  for (let i = 0; i < 75 && !s.done; i++) stepHeist(s, { x: -1 });
+  assert.ok(s.shots.some((p) => Math.abs(Math.hypot(p.vx, p.vz) - 9) < 1e-10));
+  assert.notDeepEqual({ x: s.drones[3].x, z: s.drones[3].z }, before);
+  assert.equal(s.drones.length, 5, "no repeated reinforcement spawn");
+});
+
+test("missing the van ends on its deadline and replays exactly", () => {
+  const s = scriptedHeist(9019, undefined, true);
+  let i = 0;
+  while (!s.done && i < CHASE_TICKS) {
+    const target = {
+        x: -6 + 3 * Math.sin(i * 0.04),
+        z: 6 + 3 * Math.cos(i * 0.04),
+      },
+      x = target.x - s.player.x,
+      z = target.z - s.player.z,
+      len = Math.hypot(x, z);
+    stepHeist(s, {
+      x: x / Math.max(1, len),
+      z: z / Math.max(1, len),
+      dash: s.player.cooldown === 0 && len > 3,
+    });
+    i++;
+  }
+  assert.equal(s.outcome, "van-left");
+  assert.ok(s.health > 0);
+  assert.equal(s.total, s.escapeDeadline);
+  const replay = replayHeist(exportHeist(s));
+  assert.equal(replay.outcome, "van-left");
+  assert.equal(replay.score, s.score);
+});
+
+test("escape route avoids every crate, including from beside cover", () => {
+  const starts = [
+    { x: -17, z: -11 },
+    { x: -13, z: -4.9 },
+    { x: 14.73, z: 2 },
+    { x: 0, z: 9 },
+  ];
+  assert.ok(
+    !clearEscapeSegment(starts[0], { x: 14, z: 9 }),
+    "direct line hits cover",
+  );
+  for (const start of starts) {
+    const route = escapeRoute(start);
+    assert.ok(route.length >= 2);
+    assert.deepEqual(route.at(-1), { x: 14, z: 9 });
+    for (let i = 1; i < route.length; i++)
+      for (let t = 0; t <= 1; t += 0.01) {
+        const p = {
+          x: route[i - 1].x + (route[i].x - route[i - 1].x) * t,
+          z: route[i - 1].z + (route[i].z - route[i - 1].z) * t,
+        };
+        assert.ok(!blocked(p));
+      }
+  }
 });
 
 test("guidance follows the real objective and offers a valid vault triangle", () => {

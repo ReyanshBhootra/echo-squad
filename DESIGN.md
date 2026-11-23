@@ -1,3 +1,13 @@
+# Current direction — Getaway, build 0.8.0
+
+User approved three changes: a vault-triggered chase, visible echo contribution and more district character. The alarm is an actual nine-active-second extraction window capped by lockdown, with two pursuit drones, faster telegraphed fire and a van-left failure. Green route markings avoid cover and leave the camera fixed. Static red beacons/search cones and an opt-in two-tone alarm signal the change; quiet mode removes decorative cones while retaining targeting warnings. No strobe or camera motion.
+
+Actual cash events identify one collector and update per-crew earnings. The last three pickup messages show who helped; final results name the echoes' cash-bag earnings. Do not infer this from proximity in the renderer or invent narrative contributions. Original north-edge storefronts, canopies, road paint and brighter fill lighting provide recognizable street context without new collision blockers. Preserve the GTA-inspired open fonts and clear color roles.
+
+Simulation/replay evidence is automated, not a human playtest. Browser/GPU/audio/layout/comfort/performance and enjoyment checks remain pending. Rules echo-heist-3, compatible old replay execution; no classic ML retraining or new performance claim.
+
+## Previous design
+
 # Current direction — Cash Job, build 0.7.0
 
 User's screenshot and feedback: the courtyard feels empty, pickups lack meaning, and the interface should take cues from GTA typography/UI. Address reward clarity and continuous movement incentive together. Eight green duffel bags give $100/$250, replenishing six seconds after collection at another unoccupied location away from the crew. Blue objects become physical keycards; three still unlock the relay job. A cash counter, floating pickup value, optional $10,000 score challenge, actual crew rank, objective marker and local radar explain what to chase. Core recorded-self/line/triangle/escape mechanics stay central.

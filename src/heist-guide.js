@@ -1,10 +1,82 @@
-import { VAULT, EXIT, LIMITS, blocked, surrounds } from "./heist-sim.js";
+import {
+  VAULT,
+  EXIT,
+  LIMITS,
+  BLOCKS,
+  blocked,
+  surrounds,
+} from "./heist-sim.js";
 const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const nearest = (s, items) =>
   items
     .slice()
     .sort((a, b) => distance(s.player, a) - distance(s.player, b))[0];
 export const cash = (n) => "$" + Math.round(n).toLocaleString("en-US");
+export const crewName = (actor) =>
+  actor === 0 ? "YOU" : `ECHO ${String(actor).padStart(2, "0")}`;
+export const escapeSeconds = (s) =>
+  s.escapeDeadline === null
+    ? null
+    : Math.max(0, Math.ceil((s.escapeDeadline - s.total) / 60));
+export function clearEscapeSegment(a, b) {
+  return !BLOCKS.some((box) => {
+    let enter = 0,
+      exit = 1;
+    for (const [axis, half] of [
+      ["x", box.w / 2 + 0.42],
+      ["z", box.d / 2 + 0.42],
+    ]) {
+      const delta = b[axis] - a[axis],
+        lo = box[axis] - half,
+        hi = box[axis] + half;
+      if (Math.abs(delta) < 1e-12) {
+        if (a[axis] <= lo || a[axis] >= hi) return false;
+        continue;
+      }
+      const first = (lo - a[axis]) / delta,
+        last = (hi - a[axis]) / delta;
+      enter = Math.max(enter, Math.min(first, last));
+      exit = Math.min(exit, Math.max(first, last));
+      if (enter >= exit) return false;
+    }
+    return enter < exit;
+  });
+}
+export function escapeRoute(start) {
+  if (clearEscapeSegment(start, EXIT)) return [start, EXIT];
+  // Tiny visibility graph around cover; route markings must not lead into crates.
+  const nodes = [start, EXIT];
+  for (const box of BLOCKS)
+    for (const dx of [-1, 1])
+      for (const dz of [-1, 1])
+        nodes.push({
+          x: box.x + dx * (box.w / 2 + 0.75),
+          z: box.z + dz * (box.d / 2 + 0.75),
+        });
+  const costs = nodes.map(() => Infinity),
+    previous = nodes.map(() => -1),
+    seen = new Set();
+  costs[0] = 0;
+  for (let step = 0; step < nodes.length; step++) {
+    let next = -1;
+    for (let i = 0; i < nodes.length; i++)
+      if (!seen.has(i) && (next === -1 || costs[i] < costs[next])) next = i;
+    if (next === 1 || !Number.isFinite(costs[next])) break;
+    seen.add(next);
+    for (let i = 0; i < nodes.length; i++)
+      if (!seen.has(i) && clearEscapeSegment(nodes[next], nodes[i])) {
+        const cost = costs[next] + distance(nodes[next], nodes[i]);
+        if (cost < costs[i]) {
+          costs[i] = cost;
+          previous[i] = next;
+        }
+      }
+  }
+  if (!Number.isFinite(costs[1])) return [start];
+  const route = [];
+  for (let at = 1; at !== -1; at = previous[at]) route.unshift(nodes[at]);
+  return route;
+}
 export function heistRank(s) {
   if (s.outcome !== "escaped") return "No getaway";
   if (s.score >= 10000) return "Ten grand crew";
@@ -17,7 +89,10 @@ export function missionTarget(s) {
     return {
       ...EXIT,
       label: "GETAWAY",
-      detail: "Run to the van",
+      detail:
+        s.escapeDeadline === null
+          ? "Run to the van"
+          : `${escapeSeconds(s)}s · DASH TO THE VAN`,
       color: "#91ef8f",
     };
   if (s.cellsTaken < 3)
@@ -125,6 +200,19 @@ export function drawRadar(canvas, s) {
   for (const relay of s.relays) if (!relay.open) dot(relay, "#ff8caf", 4);
   dot(VAULT, s.vaultOpen ? "#91ef8f" : "#ffd18e", 4);
   dot(EXIT, s.exitOpen ? "#ffffff" : "#63826f", 4);
+  if (s.escapeDeadline !== null && !s.done) {
+    ctx.strokeStyle = "#91ef8f";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    escapeRoute(s.player).forEach((p, i) => {
+      const a = pos(p);
+      i ? ctx.lineTo(a.x, a.y) : ctx.moveTo(a.x, a.y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    for (const d of s.drones) if (d.pursuit) dot(d, "#ff775f", 3);
+  }
   const crew = [s.player, ...s.ghosts];
   if (crew.length > 1) {
     ctx.strokeStyle = "#ffce8e90";

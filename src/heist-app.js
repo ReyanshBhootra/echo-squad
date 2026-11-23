@@ -11,7 +11,14 @@ import {
   HEIST_RULES,
 } from "./heist-sim.js";
 import { download, localDate } from "./storage.js";
-import { cash, heistRank, missionTarget, drawRadar } from "./heist-guide.js";
+import {
+  cash,
+  heistRank,
+  missionTarget,
+  drawRadar,
+  crewName,
+  escapeSeconds,
+} from "./heist-guide.js";
 
 const $ = (id) => document.getElementById(id),
   canvas = $("district");
@@ -34,6 +41,7 @@ let lastRun = null,
   broadcastAt = 0,
   sound = false,
   audio = null;
+let alarmAt = 0;
 let lastInput = Date.now();
 let preference = "on";
 try {
@@ -94,14 +102,17 @@ function tone(type) {
       vault: [130.81, 164.81, 196],
       damage: [90],
       escape: [523.25, 659.25, 783.99],
+      alarm: [220, 330],
     }[type];
     if (!notes) return;
     notes.forEach((frequency, i) => {
       const oscillator = audio.createOscillator(),
         gain = audio.createGain(),
         start = audio.currentTime + i * 0.035,
-        length = type === "vault" || type === "escape" ? 0.55 : 0.15;
-      oscillator.type = type === "damage" ? "triangle" : "sine";
+        length = ["vault", "escape", "alarm"].includes(type) ? 0.55 : 0.15;
+      oscillator.type = ["damage", "alarm"].includes(type)
+        ? "triangle"
+        : "sine";
       oscillator.frequency.setValueAtTime(frequency, start);
       oscillator.frequency.exponentialRampToValueAtTime(
         frequency * (type === "damage" ? 0.45 : 1.3),
@@ -142,7 +153,15 @@ function processEvents() {
   let soundEvent = null;
   for (const e of world.events) {
     if (e.points) reward(e);
-    if (e.type === "cash") soundEvent ??= "cell";
+    if (e.type === "cash") {
+      soundEvent ??= "cell";
+      const entry = document.createElement("li");
+      entry.textContent = `${crewName(e.actor)} grabbed +${cash(e.points)}`;
+      entry.dataset.actor = e.actor;
+      $("crew-feed").prepend(entry);
+      while ($("crew-feed").children.length > 3)
+        $("crew-feed").lastElementChild.remove();
+    }
     if (e.type === "cell") {
       if (world.cellsTaken <= 3) notify(`KEYCARD ${world.cellsTaken} / 3`, 0.6);
       soundEvent ??= "cell";
@@ -159,6 +178,11 @@ function processEvents() {
       notify("+$1,200. GET TO THE VAN.", 2);
       soundEvent = "vault";
     }
+    if (e.type === "alarm") {
+      notify(`ALARM. VAN LEAVES IN ${escapeSeconds(world)} SECONDS.`, 1.4);
+      alarmAt = 0;
+    }
+    if (e.type === "van-left") notify("THE VAN LEFT.", 1);
     if (e.type === "escape") {
       notify("CREW CLEAR", 1);
       soundEvent = "escape";
@@ -182,6 +206,8 @@ function processEvents() {
 function showGame() {
   $("radar-panel").hidden = false;
   $("cash-feedback").replaceChildren();
+  $("crew-feed").replaceChildren();
+  $("crew-panel").hidden = false;
   $("brief").hidden = true;
   $("end").hidden = true;
   $("pause-menu").hidden = true;
@@ -232,6 +258,9 @@ function lobby() {
     $(id).hidden = true;
   $("brief").hidden = false;
   $("radar-panel").hidden = true;
+  $("crew-panel").hidden = true;
+  $("alarm-banner").hidden = true;
+  document.body.classList.remove("alarm-active");
   $("target-marker").hidden = true;
   $("cash-feedback").replaceChildren();
   $("personal-best").textContent = rows().length
@@ -289,20 +318,24 @@ function showResults() {
       ? "Crew clear."
       : world.outcome === "caught"
         ? "Caught in the act."
-        : "Lockdown.";
+        : world.outcome === "van-left"
+          ? "The van left."
+          : "Lockdown.";
   $("end-score").textContent = format(world.score);
   $("end-summary").textContent =
-    `${heistRank(world)} · ${world.lootTaken} cash bags (${cash(world.lootCash)}) · ${world.stats.links} relays · ${world.stats.hits} armor hits`;
+    `${heistRank(world)} · ${world.lootTaken} cash bags (${cash(world.lootCash)}) · echoes earned ${cash(world.crewCash[1] + world.crewCash[2])} · ${world.stats.hits} armor hits`;
   $("end-tip").textContent =
     world.outcome === "escaped"
       ? "Your past selves pulled it off. Try a faster, cleaner escape."
-      : world.cellsTaken < 3
-        ? "Follow the blue KEYCARD marker. Get three cards, grab green cash bags, and keep moving."
-        : world.stats.links < 2
-          ? "Next run: put your first route on one side, then sweep your link across the pink relays."
-          : !world.vaultOpen
-            ? "Next run: record opposite routes so your final triangle can surround the gold vault."
-            : "The exit was open. Save a dash for the last run to the green van.";
+      : world.outcome === "van-left"
+        ? "When the alarm starts, head straight to the van. Follow green and save a dash for pursuit fire."
+        : world.cellsTaken < 3
+          ? "Follow the blue KEYCARD marker. Get three cards, grab green cash bags, and keep moving."
+          : world.stats.links < 2
+            ? "Next run: put your first route on one side, then sweep your link across the pink relays."
+            : !world.vaultOpen
+              ? "Next run: record opposite routes so your final triangle can surround the gold vault."
+              : "The exit was open. Save a dash for the last run to the green van.";
   $("retry").focus({ preventScroll: true });
 }
 $("watch").onclick = () => {
@@ -454,12 +487,10 @@ function update() {
   $("loot").textContent = format(world.score);
   $("armor").textContent = `${world.health} / 6`;
   $("cells").textContent = `KEYCARDS ${Math.min(3, world.cellsTaken)} / 3`;
-  $("heat").textContent =
-    "★".repeat(world.phase + 1) + "☆".repeat(2 - world.phase);
-  $("heat").setAttribute(
-    "aria-label",
-    `Security intensity ${world.phase + 1} of 3`,
-  );
+  const chasing = world.escapeDeadline !== null && !world.done,
+    heat = chasing ? 5 : world.phase + 1;
+  $("heat").textContent = "★".repeat(heat) + "☆".repeat(5 - heat);
+  $("heat").setAttribute("aria-label", `Security intensity ${heat} of 5`);
   $("health-fill").style.transform = `scaleX(${world.health / 6})`;
   $("take-goal").textContent =
     world.score >= 10000 ? "$10K TARGET REACHED" : "TARGET $10,000";
@@ -478,9 +509,16 @@ function update() {
   $("objective-copy").textContent = heistObjective(world);
   $("objective-timer").textContent = world.done
     ? "MISSION ENDED"
-    : `${world.phase < 2 ? "NEXT ECHO" : "LOCKDOWN"} IN ${Math.ceil((PASS_TICKS - world.tick) / HZ)}s`;
+    : chasing
+      ? `VAN LEAVES IN ${escapeSeconds(world)}s · SPACE TO DASH`
+      : `${world.phase < 2 ? "NEXT ECHO" : "LOCKDOWN"} IN ${Math.ceil((PASS_TICKS - world.tick) / HZ)}s`;
   $("pass-fill").style.transform =
     `scaleX(${Math.min(1, world.tick / PASS_TICKS)})`;
+  document.body.classList.toggle("alarm-active", chasing);
+  $("alarm-banner").hidden = !chasing;
+  $("alarm-seconds").textContent = chasing ? `${escapeSeconds(world)}s` : "";
+  $("echo-earned").textContent = cash(world.crewCash[1] + world.crewCash[2]);
+  $("crew-empty").hidden = $("crew-feed").children.length > 0;
 }
 function reward(event) {
   if (!view) return;
@@ -488,7 +526,12 @@ function reward(event) {
   if (!point.visible) return;
   const label = document.createElement("span");
   label.className = "cash-pop" + (effects ? "" : " quiet");
-  label.textContent = "+" + cash(event.points);
+  label.textContent =
+    (event.type === "cash" && event.actor > 0
+      ? crewName(event.actor) + " "
+      : "") +
+    "+" +
+    cash(event.points);
   label.style.left = `${point.x}px`;
   label.style.top = `${point.y}px`;
   $("cash-feedback").append(label);
@@ -537,6 +580,15 @@ function frame(now) {
     if (endDelay <= 0) showResults();
   }
   if (noticeUntil && now > noticeUntil) $("notice").hidden = true;
+  if (
+    mode === "playing" &&
+    world.escapeDeadline !== null &&
+    !world.done &&
+    now - alarmAt > 1300
+  ) {
+    tone("alarm");
+    alarmAt = now;
+  }
   if (view && mode !== "error") {
     try {
       view.render(world, now / 1000, effects, frameEvents);

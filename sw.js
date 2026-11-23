@@ -1,4 +1,4 @@
-const CACHE = "echo-squad-v9-cash-job";
+const CACHE = "echo-squad-v10-getaway";
 const FILES = [
   "./",
   "./index.html",

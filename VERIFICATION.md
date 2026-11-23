@@ -1,3 +1,9 @@
+# Getaway — build0.8.0 / November22,2026
+
+All37 Node tests pass. Scripted ordinary-control success: tick3248,score6865,5armor,crew bag earnings[250,0,100], deadline3715. A separate real-input route deliberately avoids extraction: van-left at tick3715 with3armor, exactly replayed. Neither route is human playtest evidence. New tests verify single reinforcement spawning, pursuit movement and9unit/s shots, expiry at the real deadline, attribution and traversable escape paths. Older rules reproduce6515 and6865, with their original no-chase behavior. Classic model checksum and held-out reproduction checks still pass; no training changed.
+
+Rendering changes include two extra drone meshes, non-flashing alarm beacon lights, quiet-gated search cones, ground route chevrons, collector feedback and original north storefronts/road paint. Browser-control tools remain unavailable: no current rendering, visual quality, layout, audio, GPU performance, offline-cache or comfort check claimed.
+
 # Cash Job — build0.7.0 / November22,2026
 
 All34 Node tests pass. New coverage: one payment per bag pickup, six-second replenishment away from a camper, echo collection credit, legacy heist1 score6515/tick3248 preserved, actual objective selection and a valid suggested vault triangle. The ordinary-control integration route still escapes at tick3248, now6865points including2cashbags/$350,5armor. This fixture prioritizes the original mission and is not an optimized loot route or a human playtest. New heist2 replay reconstructs its full result; heist1 replays retain original scoring. Classic ML results/weights/raw evidence were not retrained or changed.
