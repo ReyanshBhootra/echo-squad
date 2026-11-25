@@ -1,4 +1,5 @@
 node_modules/
+tools/submission-studio/*.mp4
 dist/
 .idea/workspace.xml
 .idea/tasks.xml

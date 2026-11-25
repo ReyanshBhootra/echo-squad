@@ -1,6 +1,8 @@
 # Echo Heist recording plan — target 2:40
 
-This is a plan, not a finished video. Capture actual current gameplay; do not use rendered mockups as evidence. No recording or YouTube upload has occurred.
+November25 production update: a separate100-second captioned/silent demo has now been recorded through the actual game renderer with scripted inputs, explicit time cuts and saved evidence chapters. Final H.264 file is in the parent outputs directory and passed full decode validation. It is not a human playtest or a public YouTube upload. The user then requested a cinematic AI trailer plus a vertical Shorts version; both edited gameplay previews exist, while generated opening footage and AI narration await Runway authorization. The plan below is historical production guidance, not a claim that its exact2:40 version was recorded.
+
+This is the earlier plan. Capture actual current gameplay; do not use rendered mockups as evidence. No YouTube upload has occurred.
 
 | Time | Footage | Point |
 | --- | --- | --- |

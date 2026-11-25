@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="UTF-8" /><title>ECHO SQUAD — Review saved demo</title
+  ><style>
+    body {
+      margin: 20px;
+      background: #101816;
+      color: #f8eed8;
+      font:
+        18px "Segoe UI",
+        sans-serif;
+    }
+    video {
+      width: min(100%, 1280px);
+      display: block;
+    }
+    p {
+      font-size: 14px;
+      color: #bdcebf;
+    }
+  </style>
+  <h1>Saved demo review</h1>
+  <div id="metadata">Reading encoded video metadata…</div>
+  <p>
+    Actual local MP4. Captioned and intentionally silent. Scripted engine
+    replay, not a human playtest.
+  </p>
+  <video id="demo" src="./review.mp4" controls preload="auto"></video>
+  <script>
+    const video = document.getElementById("demo");
+    const update = () =>
+      (document.getElementById("metadata").textContent =
+        `${video.videoWidth} × ${video.videoHeight} · ${video.duration.toFixed(3)} seconds`);
+    video.onloadedmetadata = update;
+    video.ondurationchange = update;
+    video.onerror = () =>
+      (document.getElementById("metadata").textContent =
+        "Video failed to load");
+  </script>
+</html>

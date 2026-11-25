@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="UTF-8" /><base href="/tools/submission-studio/" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>ECHO SQUAD — Submission studio</title>
+  <style>
+    @font-face {
+      font-family: Display;
+      src: url("../../assets/fonts/BowlbyOneSC-Regular.ttf");
+    }
+    @font-face {
+      font-family: Condensed;
+      src: url("../../assets/fonts/Anton-Regular.ttf");
+    }
+    body {
+      margin: 0;
+      background: #0c1514;
+      color: #f6f0db;
+      font:
+        16px "Segoe UI",
+        sans-serif;
+    }
+    header {
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    button,
+    a {
+      background: #efc957;
+      color: #0c1514;
+      border: 0;
+      padding: 12px 20px;
+      cursor: pointer;
+      font:
+        17px Condensed,
+        sans-serif;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+    #video {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #101625;
+    }
+    #scene {
+      position: absolute;
+      left: -2000px;
+      top: 0;
+      width: 1280px;
+      height: 720px;
+      pointer-events: none;
+    }
+    p {
+      margin: 8px 18px;
+      font-size: 13px;
+      color: #bdd0c6;
+    }
+    a[hidden] {
+      display: none;
+    }
+  </style>
+  <header>
+    <b>SUBMISSION STUDIO</b
+    ><button id="record" disabled>Preparing real replay…</button
+    ><a id="review" hidden target="_blank">Review saved video</a
+    ><span id="status" role="status"
+      >Loading actual engine and saved evidence.</span
+    >
+  </header>
+  <p>
+    100-second captioned demo. Actual Three.js renderer + deterministic scripted
+    controls. Not a human playtest. Saves only to this workspace; no upload,
+    microphone or desktop capture.
+  </p>
+  <canvas id="video" width="1280" height="720"></canvas
+  ><canvas id="scene" width="1280" height="720"></canvas>
+  <script type="module" src="./studio.js"></script>
+</html>
