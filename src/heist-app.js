@@ -562,7 +562,7 @@ function update() {
     : "DASH READY";
   $("objective-copy").textContent = heistObjective(world)
     .replaceAll("The van left.", "The airlock sealed.")
-    .replaceAll("Green bags", "Green salvage")
+    .replaceAll("Green bags add cash.", "Green salvage adds cash.")
     .replaceAll("green cash bags", "green salvage")
     .replaceAll("green van", "extraction airlock");
   $("objective-timer").textContent = world.done

@@ -1,4 +1,4 @@
-const CACHE = "echo-squad-v13-orbital-motion";
+const CACHE = "echo-squad-v14-orbital-motion";
 const FILES = [
   "./",
   "./index.html",
