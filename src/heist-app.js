@@ -41,7 +41,9 @@ let lastRun = null,
   broadcastAt = 0,
   sound = false,
   audio = null;
-let alarmAt = 0;
+let alarmAt = 0,
+  jumpQueued = false,
+  previousCrew = null;
 let lastInput = Date.now();
 let preference = "on";
 try {
@@ -175,14 +177,14 @@ function processEvents() {
       soundEvent = "damage";
     }
     if (e.type === "vault") {
-      notify("+$1,200. GET TO THE VAN.", 2);
+      notify("+$1,200. REACH THE AIRLOCK.", 2);
       soundEvent = "vault";
     }
     if (e.type === "alarm") {
-      notify(`ALARM. VAN LEAVES IN ${escapeSeconds(world)} SECONDS.`, 1.4);
+      notify(`ALARM. AIRLOCK CLOSES IN ${escapeSeconds(world)} SECONDS.`, 1.4);
       alarmAt = 0;
     }
-    if (e.type === "van-left") notify("THE VAN LEFT.", 1);
+    if (e.type === "van-left") notify("AIRLOCK SEALED.", 1);
     if (e.type === "escape") {
       notify("CREW CLEAR", 1);
       soundEvent = "escape";
@@ -190,6 +192,7 @@ function processEvents() {
     if (e.type === "phase") {
       phaseHold = 1.5;
       accumulator = 0;
+      jumpQueued = false;
       keys.clear();
       touchKeys.clear();
       dashQueued = false;
@@ -224,9 +227,13 @@ function start() {
   isReplay = false;
   saved = false;
   mode = "playing";
+  view?.resetCamera();
+  previousCrew = null;
+  jumpQueued = false;
   phaseHold = 0;
   accumulator = 0;
   noticeUntil = 0;
+  jumpQueued = false;
   keys.clear();
   touchKeys.clear();
   dashQueued = false;
@@ -242,6 +249,7 @@ function lobby() {
   world = createHeist();
   mode = "lobby";
   phaseHold = 0;
+  jumpQueued = false;
   keys.clear();
   touchKeys.clear();
   accumulator = 0;
@@ -275,6 +283,7 @@ function pause() {
   lastInput = Date.now();
   resumeMode = mode;
   mode = "paused";
+  jumpQueued = false;
   keys.clear();
   touchKeys.clear();
   dashQueued = false;
@@ -298,6 +307,7 @@ function finish() {
   if (!isReplay) lastRun = exportHeist(world);
   mode = "ending";
   endDelay = 0.9;
+  jumpQueued = false;
   keys.clear();
   touchKeys.clear();
   document.body.classList.remove("playing");
@@ -319,7 +329,7 @@ function showResults() {
       : world.outcome === "caught"
         ? "Caught in the act."
         : world.outcome === "van-left"
-          ? "The van left."
+          ? "The airlock sealed."
           : "Lockdown.";
   $("end-score").textContent = format(world.score);
   $("end-summary").textContent =
@@ -328,14 +338,14 @@ function showResults() {
     world.outcome === "escaped"
       ? "Your past selves pulled it off. Try a faster, cleaner escape."
       : world.outcome === "van-left"
-        ? "When the alarm starts, head straight to the van. Follow green and save a dash for pursuit fire."
+        ? "When the alarm starts, head straight to the airlock. Follow green and save a dash for pursuit fire."
         : world.cellsTaken < 3
           ? "Follow the blue KEYCARD marker. Get three cards, grab green cash bags, and keep moving."
           : world.stats.links < 2
             ? "Next run: put your first route on one side, then sweep your link across the pink relays."
             : !world.vaultOpen
               ? "Next run: record opposite routes so your final triangle can surround the gold vault."
-              : "The exit was open. Save a dash for the last run to the green van.";
+              : "The exit was open. Save a dash for the last run to the extraction airlock.";
   $("retry").focus({ preventScroll: true });
 }
 $("watch").onclick = () => {
@@ -351,6 +361,7 @@ $("watch").onclick = () => {
   isReplay = true;
   phaseHold = 0;
   accumulator = 0;
+  jumpQueued = false;
   keys.clear();
   dashQueued = false;
   showGame();
@@ -401,17 +412,55 @@ function action() {
       (held("s") || held("ArrowDown") ? 1 : 0) -
       (held("w") || held("ArrowUp") ? 1 : 0),
     dash: dashQueued,
+    jump: jumpQueued,
   };
   if (a.x || a.z || a.dash) lastInput = Date.now();
   dashQueued = false;
-  return a;
+  jumpQueued = false;
+  return { ...a, ...(view?.movement(a.x, a.z) || {}) };
 }
+function toggleCamera() {
+  if (!view) return;
+  const raised = !view.getOverview();
+  view.setOverview(raised);
+  $("camera-mode").textContent = raised ? "View: deck [V]" : "View: crew [V]";
+  $("camera-mode").setAttribute("aria-pressed", String(raised));
+  lastInput = Date.now();
+}
+$("camera-mode").onclick = toggleCamera;
+let cameraDrag = null;
+canvas.addEventListener("pointerdown", (e) => {
+  if (!["playing", "replay", "paused"].includes(mode) || e.button !== 0) return;
+  cameraDrag = { id: e.pointerId, x: e.clientX };
+  canvas.setPointerCapture(e.pointerId);
+  canvas.classList.add("looking");
+  lastInput = Date.now();
+});
+canvas.addEventListener("pointermove", (e) => {
+  if (!cameraDrag || e.pointerId !== cameraDrag.id) return;
+  view?.turnCamera((cameraDrag.x - e.clientX) * 0.006);
+  cameraDrag.x = e.clientX;
+  lastInput = Date.now();
+});
+function endCameraDrag() {
+  cameraDrag = null;
+  canvas.classList.remove("looking");
+}
+canvas.addEventListener("pointerup", endCameraDrag);
+canvas.addEventListener("pointercancel", endCameraDrag);
+canvas.addEventListener("lostpointercapture", endCameraDrag);
+window.addEventListener("blur", endCameraDrag);
 document.addEventListener("keydown", (e) => {
   if (e.target.closest("input,textarea,select")) return;
   if (e.key === " " && e.target.closest("button,a")) return;
   if (e.key === "Escape") {
     e.preventDefault();
     mode === "paused" ? resume() : pause();
+    return;
+  }
+  if (e.key.toLowerCase() === "v" && !e.repeat) {
+    e.preventDefault();
+    toggleCamera();
     return;
   }
   if (mode !== "playing") return;
@@ -422,6 +471,9 @@ document.addEventListener("keydown", (e) => {
       "a",
       "s",
       "d",
+      "q",
+      "e",
+      "j",
       "ArrowUp",
       "ArrowDown",
       "ArrowLeft",
@@ -430,7 +482,9 @@ document.addEventListener("keydown", (e) => {
     ].includes(key)
   ) {
     e.preventDefault();
-    if (key === " ") {
+    if (key === "j") {
+      if (!e.repeat) jumpQueued = true;
+    } else if (key === " ") {
       if (!e.repeat) dashQueued = true;
     } else keys.add(key);
   }
@@ -463,7 +517,7 @@ canvas.addEventListener("webglcontextlost", (e) => {
   $("pause-menu").hidden = true;
   $("graphics-error").hidden = false;
   $("error-message").textContent =
-    "Graphics context was lost. Choose Retry 3D to reload the district.";
+    "Graphics context was lost. Choose Retry 3D to reload the station.";
 });
 $("reload").onclick = () => location.reload();
 function update() {
@@ -471,7 +525,7 @@ function update() {
   $("pass-label").textContent =
     (isReplay ? "REPLAY · " : "") + titles[world.phase];
   $("mission").textContent = world.vaultOpen
-    ? "Get to the getaway van."
+    ? "Get to the extraction airlock."
     : world.cellsTaken < 3
       ? "Grab 3 keycards. Take the cash."
       : world.phase === 0
@@ -506,11 +560,15 @@ function update() {
   $("dash").textContent = world.player.cooldown
     ? `DASH ${(world.player.cooldown / HZ).toFixed(1)}s`
     : "DASH READY";
-  $("objective-copy").textContent = heistObjective(world);
+  $("objective-copy").textContent = heistObjective(world)
+    .replaceAll("The van left.", "The airlock sealed.")
+    .replaceAll("Green bags", "Green salvage")
+    .replaceAll("green cash bags", "green salvage")
+    .replaceAll("green van", "extraction airlock");
   $("objective-timer").textContent = world.done
     ? "MISSION ENDED"
     : chasing
-      ? `VAN LEAVES IN ${escapeSeconds(world)}s · SPACE TO DASH`
+      ? `AIRLOCK CLOSES IN ${escapeSeconds(world)}s · SPACE TO DASH`
       : `${world.phase < 2 ? "NEXT ECHO" : "LOCKDOWN"} IN ${Math.ceil((PASS_TICKS - world.tick) / HZ)}s`;
   $("pass-fill").style.transform =
     `scaleX(${Math.min(1, world.tick / PASS_TICKS)})`;
@@ -545,6 +603,11 @@ function updateTarget() {
       : null;
   const point = target && view?.project(target.x, target.z, 2.8);
   marker.hidden = !point?.visible;
+  const bearing = $("target-bearing");
+  bearing.hidden = !target || !!point?.visible;
+  if (target && !point?.visible) {
+    bearing.textContent = `${target.label} · ${view.bearing(target, world.player)} · V FOR DECK MAP`;
+  }
   if (marker.hidden) return;
   marker.style.left = `${point.x}px`;
   marker.style.top = `${point.y}px`;
@@ -557,6 +620,13 @@ function frame(now) {
   const elapsed = last ? Math.min((now - last) / 1000, 0.1) : 0;
   last = now;
   if (["playing", "replay"].includes(mode)) {
+    if (mode === "playing" && !phaseHold) {
+      const turning = (keys.has("q") ? 1 : 0) - (keys.has("e") ? 1 : 0);
+      if (turning) {
+        view?.turnCamera(turning * elapsed * 1.8);
+        lastInput = Date.now();
+      }
+    }
     if (phaseHold > 0) {
       phaseHold = Math.max(0, phaseHold - elapsed);
       accumulator = 0;
@@ -564,7 +634,10 @@ function frame(now) {
       accumulator += elapsed;
       while (accumulator >= HSTEP && ["playing", "replay"].includes(mode)) {
         accumulator -= HSTEP;
+        previousCrew = [world.player, ...world.ghosts].map((p) => ({ ...p }));
+        const previousPhase = world.phase;
         stepHeist(world, isReplay ? lastRun.inputs[world.total] : action());
+        if (previousPhase !== world.phase) previousCrew = null;
         frameEvents.push(...world.events);
         processEvents();
         if (world.done) {
@@ -591,7 +664,14 @@ function frame(now) {
   }
   if (view && mode !== "error") {
     try {
-      view.render(world, now / 1000, effects, frameEvents);
+      view.setLive(mode !== "lobby" && mode !== "boot");
+      view.render(world, now / 1000, effects, frameEvents, {
+        previous: previousCrew,
+        alpha:
+          ["playing", "replay"].includes(mode) && !phaseHold
+            ? accumulator / HSTEP
+            : 1,
+      });
       updateTarget();
     } catch (err) {
       mode = "error";
@@ -622,17 +702,17 @@ function frame(now) {
 }
 window.addEventListener("resize", () => view?.resize());
 try {
-  const { createHeistScene } = await import("./heist-scene.js");
-  view = createHeistScene(canvas);
+  const { createStationScene } = await import("./station-scene.js");
+  view = createStationScene(canvas);
   view.setQuality(effects);
   mode = "lobby";
   $("begin").disabled = false;
-  $("begin").textContent = "Accept the job →";
+  $("begin").textContent = "Board the station";
   $("personal-best").textContent = rows().length
     ? `STATION BEST ${cash(rows()[0].score)}`
     : "CHASE A $10,000 GETAWAY";
   $("boot-status").textContent =
-    "District ready. Your first echo arrives in 25 seconds.";
+    "Station ready. Your first echo arrives in 25 seconds.";
   requestAnimationFrame(frame);
 } catch (err) {
   $("brief").hidden = true;

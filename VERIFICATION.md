@@ -1,3 +1,17 @@
+# Orbital checkpoint - November 27, 2026
+
+## Orbital - build 0.9.0
+
+The main game now uses an original orbital salvage station and rounded crew suits. This remains one player with exact recorded selves. WASD/arrows move relative to the third-person camera; drag to orbit, Q/E turn, V switches to the raised deck view, Space dashes, J jumps, Escape pauses. Jumping uses fixed-step gravity (20 units/s squared), ground collision and one jump per press. High jumps clear low security shots. Platform climbing is not implemented.
+
+Rendering interpolates the 60 Hz simulation samples. The distance-driven walk cycle uses alternating stance/swing feet and two-segment knee geometry; stance boots stay at floor level. Landing compresses the suit. Camera follows interpolated horizontal motion without jump bobbing. Overlapping echoes hide their suit to keep the real player readable. Quiet effects preserve functional leg movement. Cargo collision matches the tested mission layout.
+
+Rules are echo-orbital-4; older heist rules 1-3 remain replayable and current scores use a new key. The saved version-three trailer run still reproduces 6,865 points at tick 3,248. The old city renderer is retained for the recording studio. Classic neural evidence is unchanged and does not describe the station controller.
+
+Verification: 46 Node tests pass. Actual browser spot checks verified the station, start, movement/keycard pickup, jumping, return to the deck, orbit drag and pause. Perceived smoothness, full human mission completion, mobile comfort and sustained frame rate still need user feedback. Existing videos show the earlier city build; a station video has not been recorded.
+
+## Historical notes
+
 # Getaway — build0.8.0 / November22,2026
 
 All37 Node tests pass. Scripted ordinary-control success: tick3248,score6865,5armor,crew bag earnings[250,0,100], deadline3715. A separate real-input route deliberately avoids extraction: van-left at tick3715 with3armor, exactly replayed. Neither route is human playtest evidence. New tests verify single reinforcement spawning, pursuit movement and9unit/s shots, expiry at the real deadline, attribution and traversable escape paths. Older rules reproduce6515 and6865, with their original no-chase behavior. Classic model checksum and held-out reproduction checks still pass; no training changed.

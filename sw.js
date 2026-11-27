@@ -1,4 +1,4 @@
-const CACHE = "echo-squad-v10-getaway";
+const CACHE = "echo-squad-v13-orbital-motion";
 const FILES = [
   "./",
   "./index.html",
@@ -8,6 +8,9 @@ const FILES = [
   "./src/heist-app.js",
   "./src/heist-sim.js",
   "./src/heist-scene.js",
+  "./src/station-scene.js",
+  "./src/station-camera.js",
+  "./src/station-motion.js",
   "./src/heist-guide.js",
   "./assets/fonts/Anton-Regular.ttf",
   "./assets/fonts/BowlbyOneSC-Regular.ttf",

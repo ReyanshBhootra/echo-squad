@@ -1,8 +1,18 @@
 // Echo Heist has its own rules. Classic experiment weights do not control it.
-export const HEIST_RULES = "echo-heist-3";
+export const HEIST_RULES = "echo-orbital-4";
+export const GETAWAY_HEIST_RULES = "echo-heist-3";
 export const CASH_HEIST_RULES = "echo-heist-2";
 export const LEGACY_HEIST_RULES = "echo-heist-1";
-const SUPPORTED_RULES = [HEIST_RULES, CASH_HEIST_RULES, LEGACY_HEIST_RULES];
+const SUPPORTED_RULES = [
+  HEIST_RULES,
+  GETAWAY_HEIST_RULES,
+  CASH_HEIST_RULES,
+  LEGACY_HEIST_RULES,
+];
+const pursuitRules = (rules) =>
+  rules === HEIST_RULES || rules === GETAWAY_HEIST_RULES;
+export const GRAVITY = 20;
+export const JUMP_SPEED = 7.2;
 export const CHASE_TICKS = 9 * 60;
 export const LOOT_RESPAWN_TICKS = 6 * 60;
 export const HZ = 60,
@@ -92,6 +102,9 @@ export function createHeist(seed = 9019, rules = HEIST_RULES) {
     player: {
       ...START,
       heading: Math.PI,
+      ...(rules === HEIST_RULES
+        ? { y: 0, vy: 0, grounded: true, jumpHeld: false }
+        : {}),
       dash: 0,
       cooldown: 0,
       invulnerable: 0,
@@ -148,6 +161,24 @@ function move(s, action) {
     nz = length ? z / Math.max(1, length) : 0;
   p.cooldown = Math.max(0, p.cooldown - 1);
   p.invulnerable = Math.max(0, p.invulnerable - 1);
+  if (s.rules === HEIST_RULES) {
+    if (action.jump && !p.jumpHeld && p.grounded) {
+      p.vy = JUMP_SPEED;
+      p.grounded = false;
+      s.events.push({ type: "jump", x: p.x, z: p.z });
+    }
+    p.jumpHeld = !!action.jump;
+    if (!p.grounded) {
+      p.vy -= GRAVITY * HSTEP;
+      p.y += p.vy * HSTEP;
+      if (p.y <= 0) {
+        p.y = 0;
+        p.vy = 0;
+        p.grounded = true;
+        s.events.push({ type: "land", x: p.x, z: p.z });
+      }
+    }
+  }
   if (action.dash && p.cooldown === 0 && length) {
     p.dash = 12;
     p.cooldown = 132;
@@ -210,7 +241,11 @@ function security(s) {
     shot.life--;
     if (blocked(shot) || Math.abs(shot.x) > 19 || Math.abs(shot.z) > 13)
       shot.life = 0;
-    if (shot.life > 0 && dist(shot, s.player) < 0.75) {
+    if (
+      shot.life > 0 &&
+      dist(shot, s.player) < 0.75 &&
+      !(s.rules === HEIST_RULES && s.player.y > 0.65)
+    ) {
       shot.life = 0;
       if (!s.player.invulnerable && !s.player.dash) {
         s.health--;
@@ -303,12 +338,12 @@ function objectives(s) {
       s.shots = [];
       s.events.push({ type: "vault", ...VAULT, points: 1200 });
       for (const d of s.drones) {
-        d.stun = s.rules === HEIST_RULES ? 45 : 240;
+        d.stun = pursuitRules(s.rules) ? 45 : 240;
         d.aim = null;
         d.windup = 0;
-        if (s.rules === HEIST_RULES) d.next = s.total + 60;
+        if (pursuitRules(s.rules)) d.next = s.total + 60;
       }
-      if (s.rules === HEIST_RULES) {
+      if (pursuitRules(s.rules)) {
         s.escapeDeadline = Math.min(MAX_TICKS, s.total + CHASE_TICKS);
         for (const [id, x, z] of [
           [3, 16, 5],
@@ -343,6 +378,7 @@ export function stepHeist(s, action = {}) {
     x: clamp(Number.isFinite(action.x) ? action.x : 0, -1, 1),
     z: clamp(Number.isFinite(action.z) ? action.z : 0, -1, 1),
     dash: !!action.dash,
+    ...(s.rules === HEIST_RULES ? { jump: !!action.jump } : {}),
   };
   s.inputs.push(normalized);
   move(s, normalized);
@@ -353,6 +389,9 @@ export function stepHeist(s, action = {}) {
     heading: s.player.heading,
     dash: s.player.dash,
     moving: s.player.moving,
+    ...(s.rules === HEIST_RULES
+      ? { y: s.player.y, vy: s.player.vy, grounded: s.player.grounded }
+      : {}),
   });
   objectives(s);
   if (!s.done) security(s);
@@ -379,6 +418,9 @@ export function stepHeist(s, action = {}) {
       s.player = {
         ...START,
         heading: Math.PI,
+        ...(s.rules === HEIST_RULES
+          ? { y: 0, vy: 0, grounded: true, jumpHeld: false }
+          : {}),
         dash: 0,
         cooldown: 0,
         invulnerable: 60,
@@ -449,6 +491,7 @@ export function replayHeist(data) {
       Math.abs(a.x) > 1 ||
       Math.abs(a.z) > 1 ||
       typeof a.dash !== "boolean" ||
+      (data.rules === HEIST_RULES && typeof a.jump !== "boolean") ||
       s.done
     )
       throw Error("Invalid replay controls.");

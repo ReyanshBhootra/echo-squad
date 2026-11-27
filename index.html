@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#111713" />
     <meta
       name="description"
-      content="One player. Three chances. Record your own crew, crack the vault and escape a 75-second 3D heist."
+      content="Board an orbital station, record your own crew and escape together. A 75-second third-person 3D mission."
     />
-    <title>ECHO SQUAD — Echo Heist</title>
+    <title>ECHO SQUAD — Orbital</title>
     <link rel="icon" href="./icon.svg" />
     <link rel="stylesheet" href="./heist.css" />
     <link
@@ -30,38 +30,41 @@
     <canvas
       id="district"
       tabindex="0"
-      aria-label="3D heist district. Move with WASD or arrow keys. Space dashes. Escape pauses."
+      aria-label="3D orbital station. WASD moves relative to camera. Drag to look, Q and E turn, V changes view, Space dashes, J jumps, Escape pauses."
     ></canvas>
     <div class="vignette" aria-hidden="true"></div>
     <header class="topbar">
       <a href="./" class="brand"
-        >ECHO <span>SQUAD</span><small>AFTER HOURS / ECHO HEIST</small></a
+        >ECHO <span>SQUAD</span><small>ORBITAL / RECOVERY CREW</small></a
       >
       <div class="tools">
-        <button id="quality" aria-pressed="true">Effects on</button
+        <button id="camera-mode" aria-pressed="false">View: crew [V]</button
+        ><button id="quality" aria-pressed="true">Effects on</button
         ><button id="audio" aria-pressed="false">Sound off</button
         ><a href="./classic.html">Classic + neural lab</a>
       </div>
     </header>
     <main>
       <section id="brief" class="panel brief" aria-labelledby="heist-title">
-        <p class="eyebrow">ECHO DISTRICT · SOLO JOB · 75 SECONDS</p>
-        <h1 id="heist-title">ECHO<br /><em>HEIST.</em></h1>
-        <p class="tagline">Take the money.<br />Bring your past selves.</p>
+        <p class="eyebrow">ORBITAL STATION 09 · ONE HUMAN · THREE SELVES</p>
+        <h1 id="heist-title">YOU. YOURSELF.<br /><em>YOUR CREW.</em></h1>
+        <p class="tagline">Board alone.<br />Escape together.</p>
         <ol class="brief-steps">
-          <li><b>SCOUT</b> Grab keycards. Fill the duffel.</li>
+          <li><b>SCOUT</b> Explore the deck. Recover keycards.</li>
           <li><b>SYNC</b> Link with your echo. Break the relays.</li>
-          <li><b>ESCAPE</b> Crack the vault. Beat the 9s getaway.</li>
+          <li><b>ESCAPE</b> Open the reactor. Reach the airlock.</li>
         </ol>
         <p id="personal-best" class="personal-best">CHASE A $10,000 GETAWAY</p>
         <button id="begin" class="primary" disabled>
-          Loading the district…
+          Preparing your suit…
         </button>
         <p class="controls">
-          WASD / ARROWS <span>MOVE</span> &nbsp; SPACE <span>DASH</span><br />75
-          seconds of active play · fixed camera
+          WASD / ARROWS <span>MOVE</span> &nbsp; SPACE <span>DASH</span
+          ><br />DRAG <span>LOOK</span> &nbsp; Q / E <span>TURN</span><br />J
+          <span>JUMP</span> � V <span>DECK VIEW</span> · 75 seconds of active
+          play
         </p>
-        <p id="boot-status" role="status">Preparing original 3D scene…</p>
+        <p id="boot-status" role="status">Pressurizing the station…</p>
         <a class="quiet-link" href="./classic.html"
           >Play the classic mouse game</a
         >
@@ -98,9 +101,11 @@
         ><span id="vault">VAULT LOCKED</span><span id="dash">DASH READY</span
         ><button id="pause">Pause</button>
       </aside>
+      <div id="target-bearing" hidden role="status"></div>
+      <div id="camera-help">DRAG TO LOOK · Q / E TURN · V DECK VIEW</div>
       <div id="notice" class="notice" role="status" hidden></div>
       <div id="alarm-banner" hidden>
-        <b>GETAWAY WINDOW</b><strong id="alarm-seconds">9s</strong
+        <b>AIRLOCK WINDOW</b><strong id="alarm-seconds">9s</strong
         ><span>FOLLOW GREEN · SPACE TO DASH</span>
       </div>
       <aside id="crew-panel" hidden>
@@ -118,7 +123,7 @@
         aria-label="District radar. White is you, green is cash, blue is keycards, pink is relays and gold is the vault."
       >
         <canvas id="radar" width="192" height="128"></canvas
-        ><small>ECHO DISTRICT <span>GREEN = CASH</span></small>
+        ><small>STATION 09 <span>GREEN = SALVAGE</span></small>
       </aside>
       <section
         id="pause-menu"
@@ -161,11 +166,11 @@
           <button id="retry" class="primary">One more heist</button
           ><button id="watch">Watch this run</button
           ><button id="export">Download replay</button
-          ><button id="lobby">Back to district</button>
+          ><button id="lobby">Back to station</button>
         </div>
       </section>
       <section id="graphics-error" class="panel modal" hidden>
-        <h2>The district couldn’t start.</h2>
+        <h2>The station couldn’t start.</h2>
         <p id="error-message"></p>
         <p>
           Echo Heist needs WebGL2 in a modern browser. The classic game is still
@@ -185,7 +190,7 @@
       <button id="touch-dash">DASH</button>
     </div>
     <footer id="lobby-footer">
-      <span>ECHO HEIST / BUILD 0.8.0</span
+      <span>ORBITAL / BUILD 0.9.0</span
       ><button id="spectator">Spectator station</button
       ><a
         href="https://github.com/ReyanshBhootra/echo-squad"

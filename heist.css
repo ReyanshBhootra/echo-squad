@@ -1213,3 +1213,287 @@ body.alarm-active #objective-timer {
     display: none;
   }
 }
+
+/* Orbital: enamel instrument panels, crew colors and yellow safety markings. */
+:root {
+  --cream: #e9f4f5;
+  --cyan: #82e5dc;
+  --gold: #ffd278;
+}
+.vignette {
+  background: linear-gradient(
+    90deg,
+    #07131de8 0%,
+    #07131d99 28%,
+    transparent 64%
+  );
+}
+.brand small {
+  color: #8eb0bc;
+  letter-spacing: 2px;
+}
+.brand span {
+  color: #82e5dc;
+}
+.brief {
+  width: min(540px, 46vw);
+  background: none;
+  border: 0;
+  box-shadow: none;
+  left: 4%;
+}
+.brief h1 {
+  font-size: clamp(34px, 4.2vw, 65px);
+  line-height: 1.06;
+  letter-spacing: -1px;
+  text-shadow: 0 3px 0 #07131d;
+}
+.brief h1 em {
+  color: #82e5dc;
+  font-style: normal;
+}
+.brief .eyebrow {
+  color: #ffd278;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+}
+.brief .tagline {
+  font-size: 26px;
+  line-height: 1.2;
+  color: #d1e2e6;
+}
+.brief-steps {
+  border-left: 2px solid #57747e;
+  padding-left: 16px;
+}
+.brief-steps b {
+  color: #93e8df;
+  width: 76px;
+}
+.brief-steps li {
+  color: #bfd0d7;
+  font-size: 14px;
+}
+.brief .primary {
+  background: #ffd278;
+  color: #101d27;
+  border-radius: 7px;
+  box-shadow: 0 4px 0 #8e672b;
+}
+.brief .controls {
+  color: #d6e8eb;
+  line-height: 1.9;
+}
+.tools button,
+.loadout button {
+  background: #122a3bdd;
+  border-color: #7da2b455;
+  border-radius: 5px;
+}
+.tools button[aria-pressed="true"] {
+  border-color: #82e5dc;
+}
+.tools button:hover,
+.loadout button:hover {
+  background: #294d63;
+}
+body.in-mission .vignette {
+  background: linear-gradient(
+    #07131d66,
+    transparent 24%,
+    transparent 80%,
+    #07131d55
+  );
+}
+.hud {
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.phase-label {
+  background: #0c2133df;
+  border-radius: 6px;
+}
+.stats {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 18px;
+  background: #0c2133df;
+  border: 1px solid #a1bec64d;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.stats .cash-stat b {
+  font-size: 30px;
+}
+.stats #heat {
+  font-size: 17px;
+}
+.stats .clock-stat {
+  padding: 8px;
+  border-radius: 5px;
+}
+.stats .clock-stat b {
+  font-size: 28px;
+}
+.haul-track,
+.health-track {
+  width: 100px;
+}
+.mission-progress {
+  top: 80px;
+  width: 260px;
+}
+.phase-label small {
+  color: #82e5dc;
+}
+.stats .cash-stat b {
+  color: #b9e69e;
+}
+.stats .clock-stat {
+  background: #e7b867;
+  color: #172735;
+}
+.stats .clock-stat small {
+  color: #283c4a;
+}
+.mission-progress {
+  background: #3b5262;
+}
+#pass-fill {
+  background: #82e5dc;
+}
+.objective {
+  background: #0c2133e8;
+  border-color: #809eaf66;
+  border-radius: 6px;
+}
+#target-marker b {
+  background: #0b2233ed;
+  color: var(--target);
+}
+#radar-panel {
+  background: #10283cdd;
+  border-color: #89b1bc66;
+  border-radius: 6px;
+}
+#camera-help {
+  display: none;
+  position: fixed;
+  left: 50%;
+  top: 165px;
+  height: max-content;
+  transform: translateX(-50%);
+  color: #b9d0da;
+  font:
+    12px HeistCondensed,
+    sans-serif;
+  letter-spacing: 1px;
+  background: #0b2131b8;
+  padding: 8px 13px;
+  border-radius: 5px;
+  pointer-events: none;
+}
+body.playing #camera-help {
+  display: block;
+}
+#target-bearing {
+  position: fixed;
+  left: 50%;
+  top: 205px;
+  height: max-content;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: #102b3eed;
+  color: #fee0a3;
+  font:
+    14px HeistCondensed,
+    sans-serif;
+  letter-spacing: 0.6px;
+  border: 1px solid #cba77288;
+  border-radius: 6px;
+  padding: 10px 16px;
+  pointer-events: none;
+}
+.notice {
+  top: 40%;
+  width: max-content;
+  max-width: 85%;
+  padding: 10px 20px;
+  font-size: 24px;
+  border: 1px solid #e5b97677;
+  border-radius: 7px;
+}
+#district {
+  cursor: grab;
+}
+#district.looking {
+  cursor: grabbing;
+}
+.modal {
+  background: #11293bef;
+  border: 1px solid #90b2c4;
+  border-radius: 12px;
+}
+@media (max-width: 800px) {
+  .brief {
+    width: min(520px, 88vw);
+    left: 5%;
+  }
+  .brief h1 {
+    font-size: 42px;
+  }
+  .brief .tagline {
+    font-size: 22px;
+  }
+  .vignette {
+    background: linear-gradient(90deg, #07131df2, #07131d55);
+  }
+  .tools {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .tools button {
+    font-size: 11px;
+    padding: 7px;
+  }
+  .stats {
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+  }
+  .stats .armor-stat {
+    display: none;
+  }
+  .phase-label {
+    max-width: 52%;
+  }
+  .mission-progress {
+    top: 80px;
+    width: 150px;
+  }
+  #target-bearing {
+    max-width: 88vw;
+    white-space: normal;
+    text-align: center;
+    bottom: 135px;
+    font-size: 12px;
+  }
+  #camera-help {
+    font-size: 10px;
+    max-width: 65vw;
+    text-align: center;
+  }
+}
+@media (max-height: 650px) {
+  .brief h1 {
+    font-size: 34px;
+  }
+  .brief .tagline {
+    font-size: 20px;
+    margin: 8px 0;
+  }
+  .brief .controls {
+    margin: 10px 0 4px;
+  }
+}
